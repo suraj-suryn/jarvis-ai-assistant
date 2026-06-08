@@ -1,0 +1,34 @@
+# ---- Credentials & Secrets ----
+credentials.json
+token.json
+service-account*.json
+*.json.key
+.env
+*.env
+
+# ---- Build output ----
+build/
+.gradle/
+out/
+
+# ---- Uploads & temp ----
+uploads/
+tmp/
+
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.class
+*.jar
+!build/libs/*.jar
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+logs/
