@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JARUS — AI Job Hunt Assistant</title>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="stylesheet" href="/css/jarus.css"/>
+  <meta name="theme-color" content="#060d1a"/>
+</head>
+<body>
+  <header class="hud-header">
+    <div class="brand">
+      <span class="brand-icon">⬡</span>
+      <span class="brand-name">JARUS</span>
+      <span class="brand-sub">AI Job Hunt Assistant</span>
+    </div>
+    <nav class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="resume">Resume</button>
+      <button class="tab-btn" data-tab="jobs">Jobs</button>
+      <button class="tab-btn" data-tab="pipeline">Pipeline</button>
+      <button class="tab-btn" data-tab="company">Company</button>
+      <button class="tab-btn" data-tab="email">Gmail</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+      <button class="tab-btn admin-only hidden" data-tab="admin">Admin</button>
+    </nav>
+    <div class="user-info" id="userInfo">
+      <img id="userAvatar" src="" alt="" class="avatar"/>
+      <span id="userName"></span>
+      <a href="/logout" class="logout-btn">Sign Out</a>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- DASHBOARD TAB -->
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="stats-row">
+        <div class="stat-card" id="statTotal"><div class="stat-num" id="numTotal">0</div><div class="stat-label">Total Jobs</div></div>
+        <div class="stat-card accent" id="statNew"><div class="stat-num" id="numNew">0</div><div class="stat-label">New Today</div></div>
+        <div class="stat-card" id="statApplied"><div class="stat-num" id="numApplied">0</div><div class="stat-label">Applied</div></div>
+        <div class="stat-card" id="statInterview"><div class="stat-num" id="numInterview">0</div><div class="stat-label">Interviews</div></div>
+      </div>
+      <div class="dashboard-actions">
+        <button class="btn-primary" onclick="App.scanJobs()">🔍 Scan Jobs Now</button>
+        <button class="btn-secondary" onclick="App.switchTab('resume')">📄 Tailor Resume</button>
+        <button class="btn-secondary" onclick="App.switchTab('pipeline')">📋 View Pipeline</button>
+      </div>
+      <div id="recentJobs" class="card">
+        <h3>Recent Captures</h3>
+        <div id="recentJobsList" class="job-list"></div>
+      </div>
+      <div id="scanResult" class="alert hidden"></div>
+    </section>
+
+    <!-- RESUME TAB -->
+    <section id="tab-resume" class="tab-panel hidden">
+      <div class="two-col">
+        <div class="col">
+          <div class="card">
+            <h3>Upload Resume</h3>
+            <div id="dropzone" class="dropzone">
+              <p>Drag & drop PDF or DOCX here</p>
+              <p class="hint">or click to select</p>
+              <input type="file" id="resumeFile" accept=".pdf,.docx" hidden/>
+            </div>
+            <div id="uploadProgress" class="hidden">Uploading…</div>
+          </div>
+          <div class="card" id="resumeListCard">
+            <h3>My Resumes</h3>
+            <div id="resumeList"></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" id="tailorCard">
+            <h3>AI Tailor Resume</h3>
+            <select id="tailorResumeSelect" class="select-input"><option value="">Select resume…</option></select>
+            <select id="tailorJobSelect" class="select-input"><option value="">Select job…</option></select>
+            <button class="btn-primary" onclick="Resume.tailor()">✨ Tailor with AI</button>
+            <div id="tailorProgress" class="hidden">Tailoring with Gemini AI…</div>
+          </div>
+          <div id="diffView" class="card hidden">
+            <h3>Resume Diff</h3>
+            <div id="diffContent"></div>
+            <div class="download-row">
+              <button class="btn-secondary" onclick="Resume.download('pdf')">⬇ Download PDF</button>
+              <button class="btn-secondary" onclick="Resume.download('docx')">⬇ Download DOCX</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOBS TAB -->
+    <section id="tab-jobs" class="tab-panel hidden">
+      <div class="jobs-header">
+        <h2>Captured Jobs</h2>
+        <div class="jobs-actions">
+          <button class="btn-primary" onclick="Jobs.showBookmarklet()">🔖 Get Bookmarklet</button>
+          <button class="btn-secondary" onclick="App.scanJobs()">🔍 Scan Now</button>
+        </div>
+      </div>
+      <div id="bookmarkletPanel" class="card hidden">
+        <h3>Job Capture Bookmarklet</h3>
+        <p>Drag this link to your bookmarks bar, then click it on any job posting:</p>
+        <div id="bookmarkletCode" class="code-block"></div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="ALL">All</button>
+        <button class="filter-btn" data-filter="NEW">New</button>
+        <button class="filter-btn" data-filter="SAVED">Saved</button>
+        <button class="filter-btn" data-filter="APPLIED">Applied</button>
+        <button class="filter-btn" data-filter="INTERVIEW">Interview</button>
+        <button class="filter-btn" data-filter="OFFER">Offer</button>
+        <button class="filter-btn" data-filter="REJECTED">Rejected</button>
+      </div>
+      <div id="jobGrid" class="job-grid"></div>
+    </section>
+
+    <!-- PIPELINE TAB -->
+    <section id="tab-pipeline" class="tab-panel hidden">
+      <h2>Application Pipeline</h2>
+      <div class="kanban-board" id="kanbanBoard">
+        <div class="kanban-col" data-status="NEW"><h3>New</h3><div class="kanban-cards" id="col-NEW"></div></div>
+        <div class="kanban-col" data-status="SAVED"><h3>Saved</h3><div class="kanban-cards" id="col-SAVED"></div></div>
+        <div class="kanban-col" data-status="APPLIED"><h3>Applied</h3><div class="kanban-cards" id="col-APPLIED"></div></div>
+        <div class="kanban-col" data-status="INTERVIEW"><h3>Interview</h3><div class="kanban-cards" id="col-INTERVIEW"></div></div>
+        <div class="kanban-col" data-status="OFFER"><h3>Offer</h3><div class="kanban-cards" id="col-OFFER"></div></div>
+      </div>
+      <div id="notesPanel" class="side-panel hidden">
+        <button class="close-btn" onclick="Pipeline.closeNotes()">✕</button>
+        <h3 id="notesPanelTitle">Interview Notes</h3>
+        <textarea id="notesTextarea" class="notes-input" placeholder="Add interview notes, prep, contacts…"></textarea>
+        <button class="btn-primary" onclick="Pipeline.saveNotes()">Save Notes</button>
+      </div>
+    </section>
+
+    <!-- COMPANY TAB -->
+    <section id="tab-company" class="tab-panel hidden">
+      <div class="card">
+        <h3>Company Research</h3>
+        <div class="input-row">
+          <input id="companyInput" type="text" class="text-input" placeholder="Company name…"/>
+          <input id="companyJobTitle" type="text" class="text-input" placeholder="Job title (optional)…"/>
+          <button class="btn-primary" onclick="Company.research()">🔎 Research</button>
+        </div>
+        <div id="companyProgress" class="hidden">Researching with Gemini AI…</div>
+      </div>
+      <div id="companyResult" class="hidden">
+        <div class="card"><h3 id="companyName"></h3><p id="companyOverview"></p>
+          <div class="link-row">
+            <a id="linkedInLink" href="#" target="_blank" class="ext-link">LinkedIn</a>
+            <a id="glassdoorLink" href="#" target="_blank" class="ext-link">Glassdoor</a>
+            <a id="googleLink" href="#" target="_blank" class="ext-link">Google Search</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Interview Prep</h3>
+          <p><strong>Rounds:</strong> <span id="interviewRounds"></span></p>
+          <ul id="interviewQuestions" class="question-list"></ul>
+          <div class="tips-box"><p id="interviewTips"></p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMAIL TAB -->
+    <section id="tab-email" class="tab-panel hidden">
+      <h2>Job Emails</h2>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="ALL">All</button>
+        <button class="filter-btn" data-filter="RECRUITER">Recruiters</button>
+        <button class="filter-btn" data-filter="APPLIED">Applied</button>
+        <button class="filter-btn" data-filter="INTERVIEW">Interviews</button>
+        <button class="filter-btn" data-filter="REJECTION">Rejections</button>
+      </div>
+      <button class="btn-secondary" style="margin-bottom:1rem" onclick="Email.load()">🔄 Refresh</button>
+      <div id="emailList" class="email-list"></div>
+      <div id="threadPanel" class="side-panel hidden">
+        <button class="close-btn" onclick="Email.closeThread()">✕</button>
+        <h3 id="threadSubject"></h3>
+        <div id="threadMessages"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS TAB -->
+    <section id="tab-settings" class="tab-panel hidden">
+      <div class="two-col">
+        <div class="col">
+          <div class="card">
+            <h3>Gemini API Key</h3>
+            <p class="hint">Your key is AES-256 encrypted before storage. <a href="https://ai.google.dev/" target="_blank">Get free key →</a></p>
+            <input type="password" id="geminiKeyInput" class="text-input" placeholder="AIza…"/>
+            <button class="btn-primary" onclick="Settings.saveKey()">Save Key</button>
+            <span id="keyStatus" class="key-status"></span>
+          </div>
+          <div class="card">
+            <h3>Job Search Preferences</h3>
+            <label>Keywords</label>
+            <input type="text" id="jobKeywords" class="text-input" placeholder="Java developer, Spring Boot…"/>
+            <label>Location</label>
+            <input type="text" id="jobLocation" class="text-input" placeholder="Remote, Bangalore, etc."/>
+            <label>Daily Scan Hour (0-23)</label>
+            <input type="number" id="scanHour" class="text-input" min="0" max="23" value="8"/>
+            <button class="btn-primary" onclick="Settings.save()">Save Preferences</button>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card">
+            <h3>Push Notifications</h3>
+            <p class="hint">Get notified on your phone when new jobs are found.</p>
+            <button class="btn-secondary" onclick="Settings.subscribePush()">Enable Push Notifications</button>
+            <span id="pushStatus"></span>
+          </div>
+          <div class="card danger-zone">
+            <h3>Account</h3>
+            <button class="btn-danger" onclick="Settings.deleteAccount()">🗑 Delete All My Data</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN TAB -->
+    <section id="tab-admin" class="tab-panel hidden">
+      <div class="card">
+        <h3>Allowed Users</h3>
+        <div class="input-row">
+          <input type="email" id="newUserEmail" class="text-input" placeholder="user@gmail.com"/>
+          <button class="btn-primary" onclick="Admin.addUser()">Add User</button>
+        </div>
+        <div id="adminUserList"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/resume.js"></script>
+  <script src="/js/jobs.js"></script>
+  <script src="/js/pipeline.js"></script>
+  <script src="/js/email.js"></script>
+  <script src="/js/settings.js"></script>
+</body>
+</html>

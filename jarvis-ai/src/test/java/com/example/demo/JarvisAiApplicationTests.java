@@ -1,13 +1,5 @@
 package com.example.demo;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class JarvisAiApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+// Tests moved to com.jarus.ai.JarusAiApplicationTests
+public class JarvisAiApplicationTests {
 }
