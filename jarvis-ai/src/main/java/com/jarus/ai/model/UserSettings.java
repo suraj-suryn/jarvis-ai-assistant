@@ -1,17 +1,37 @@
 package com.jarus.ai.model;
 
+import com.jarus.ai.config.JpaConverters;
+import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "user_settings")
 public class UserSettings {
+
+    @Id
+    @Column(name = "user_id")
     private String userId;
+
+    @Column(length = 2000)
     private String encryptedGeminiKey;
     private String defaultResumeId;
+
+    @Column(length = 2000)
     private String jobKeywords;
     private String location;
+
+    @Convert(converter = JpaConverters.StringListConverter.class)
+    @Column(name = "enabled_sources", length = 1000)
     private List<String> enabledSources = new ArrayList<>();
+
     private int scanTimeHour = 8;
+
+    @Column(length = 2000)
     private String gmailAccessToken;  // encrypted
+
+    @Column(length = 2000)
     private String gmailRefreshToken; // encrypted
 
     public UserSettings() {}

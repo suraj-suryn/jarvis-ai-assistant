@@ -1,15 +1,32 @@
 package com.jarus.ai.model;
 
+import com.jarus.ai.config.JpaConverters;
+import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "tailored_resumes")
 public class TailoredResume {
+
+    @Id
     private String id;
+
+    @Column(name = "user_id", nullable = false)
     private String userId;
+
     private String originalResumeId;
     private String jobId;
+
+    @Convert(converter = JpaConverters.ResumeSectionListConverter.class)
+    @Column(columnDefinition = "TEXT")
     private List<ResumeSection> modifiedSections = new ArrayList<>();
+
+    @Convert(converter = JpaConverters.StringListConverter.class)
+    @Column(columnDefinition = "TEXT")
     private List<String> changesSummary = new ArrayList<>();
+
     private String gcsPdfPath;
     private String gcsDocxPath;
     private long createdAt;

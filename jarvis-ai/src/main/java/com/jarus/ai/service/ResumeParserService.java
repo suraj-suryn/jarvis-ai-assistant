@@ -2,6 +2,7 @@ package com.jarus.ai.service;
 
 import com.jarus.ai.model.ParsedResume;
 import com.jarus.ai.model.ResumeSection;
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
@@ -60,7 +61,7 @@ public class ResumeParserService {
     }
 
     private String parsePdf(byte[] data) throws IOException {
-        try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(data))) {
+        try (PDDocument doc = Loader.loadPDF(data)) {
             PDFTextStripper stripper = new PDFTextStripper();
             return stripper.getText(doc);
         }

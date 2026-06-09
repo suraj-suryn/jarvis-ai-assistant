@@ -1,11 +1,23 @@
 package com.jarus.ai.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "cover_letters")
 public class CoverLetter {
+
+    @Id
     private String id;
+
+    @Column(name = "user_id", nullable = false)
     private String userId;
+
     private String jobId;
     private String resumeId;
+
+    @Column(columnDefinition = "TEXT")
     private String content;
+
     private String gcsPdfPath;
     private String gcsDocxPath;
     private long createdAt;

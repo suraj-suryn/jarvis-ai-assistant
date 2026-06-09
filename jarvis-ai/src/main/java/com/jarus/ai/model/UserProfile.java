@@ -1,7 +1,16 @@
 package com.jarus.ai.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "user_profiles")
 public class UserProfile {
+
+    @Id
+    @Column(name = "user_id")
     private String userId; // Google sub claim
+
+    @Column(nullable = false)
     private String email;
     private String displayName;
     private String pictureUrl;

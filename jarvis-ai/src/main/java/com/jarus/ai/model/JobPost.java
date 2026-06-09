@@ -1,21 +1,44 @@
 package com.jarus.ai.model;
 
+import com.jarus.ai.config.JpaConverters;
+import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "job_posts")
 public class JobPost {
+
+    @Id
     private String id;
+
+    @Column(name = "user_id", nullable = false)
     private String userId;
+
     private String title;
     private String company;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(length = 2000)
     private String url;
-    private String source; // linkedin, naukri, indeed, remoteok, etc.
-    private String status; // NEW, APPLIED, INTERVIEW, OFFER, REJECTED
+    private String source;
+    private String status;
     private int matchScore;
+
+    @Convert(converter = JpaConverters.StringListConverter.class)
+    @Column(name = "matched_skills", length = 2000)
     private List<String> matchedSkills = new ArrayList<>();
+
+    @Convert(converter = JpaConverters.StringListConverter.class)
+    @Column(name = "missing_skills", length = 2000)
     private List<String> missingSkills = new ArrayList<>();
+
+    @Column(columnDefinition = "TEXT")
     private String interviewNotes;
+
     private boolean newToday;
     private long capturedAt;
     private long appliedAt;

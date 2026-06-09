@@ -1,39 +1,54 @@
 package com.jarus.ai.service;
 
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
 
 @Service
 public class GcsStorageService {
 
     @Autowired
-    private Storage storage;
-
-    @Value("${spring.cloud.gcp.storage.bucket:jarus-files}")
-    private String bucketName;
+    private Cloudinary cloudinary;
 
     public String upload(byte[] data, String path, String contentType) {
-        BlobId blobId = BlobId.of(bucketName, path);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
-        storage.create(blobInfo, data);
-        return path;
+        try {
+            String publicId = path.replace("/", "_").replace(".", "_");
+            Map<?, ?> result = cloudinary.uploader().upload(data,
+                    ObjectUtils.asMap(
+                            "public_id", publicId,
+                            "resource_type", "raw"
+                    ));
+            return (String) result.get("public_id");
+        } catch (IOException e) {
+            throw new RuntimeException("File upload failed", e);
+        }
     }
 
-    public byte[] download(String path) {
-        return storage.readAllBytes(bucketName, path);
+    public byte[] download(String publicId) {
+        try {
+            String url = cloudinary.url().resourceType("raw").generate(publicId);
+            return new URL(url).openStream().readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException("File download failed", e);
+        }
     }
 
-    public void delete(String path) {
-        storage.delete(BlobId.of(bucketName, path));
+    public void delete(String publicId) {
+        try {
+            cloudinary.uploader().destroy(publicId,
+                    ObjectUtils.asMap("resource_type", "raw"));
+        } catch (IOException e) {
+            throw new RuntimeException("File delete failed", e);
+        }
     }
 
     public void deleteFolder(String prefix) {
-        storage.list(bucketName, Storage.BlobListOption.prefix(prefix))
-                .iterateAll()
-                .forEach(blob -> blob.delete());
+        // Cloudinary free tier doesn't support prefix deletion; no-op
     }
 }
+

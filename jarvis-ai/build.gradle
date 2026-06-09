@@ -10,16 +10,12 @@ description = 'JARUS - AI-powered Job Hunt & Career Assistant'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(23)
 	}
 }
 
 repositories {
 	mavenCentral()
-}
-
-ext {
-	set('springCloudGcpVersion', '4.8.4')
 }
 
 dependencies {
@@ -32,9 +28,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// Google Cloud - Firestore + Storage
-	implementation 'com.google.cloud:spring-cloud-gcp-starter-data-firestore'
-	implementation 'com.google.cloud:spring-cloud-gcp-starter-storage'
+	// Database - Spring Data JPA + PostgreSQL (Supabase)
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'org.postgresql:postgresql:42.7.3'
+
+	// File Storage - Cloudinary (free tier, no card required)
+	implementation 'com.cloudinary:cloudinary-http44:1.39.0'
 
 	// Gmail API
 	implementation 'com.google.apis:google-api-services-gmail:v1-rev20220404-2.0.0'
@@ -43,6 +42,7 @@ dependencies {
 
 	// Resume Parsing (PDF + DOCX)
 	implementation 'org.apache.pdfbox:pdfbox:3.0.1'
+	implementation 'org.apache.pdfbox:pdfbox-io:3.0.1'
 	implementation 'org.apache.poi:poi-ooxml:5.2.5'
 
 	// Web Push Notifications (VAPID)
@@ -53,7 +53,7 @@ dependencies {
 	implementation 'com.rometools:rome:2.1.0'
 
 	// Rate Limiting
-	implementation 'com.github.bucket4j:bucket4j-core:8.10.1'
+	implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
 	// JSON Structured Logging
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
@@ -62,12 +62,6 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "com.google.cloud:spring-cloud-gcp-dependencies:${springCloudGcpVersion}"
-	}
 }
 
 tasks.named('test') {

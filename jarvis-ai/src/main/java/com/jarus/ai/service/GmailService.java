@@ -63,7 +63,7 @@ public class GmailService {
 
     public List<GmailMessage> getThread(Authentication authentication, String threadId) throws IOException, GeneralSecurityException {
         Gmail gmail = buildGmailClient(authentication);
-        Thread thread = gmail.users().threads().get("me", threadId).setFormat("full").execute();
+        com.google.api.services.gmail.model.Thread thread = gmail.users().threads().get("me", threadId).setFormat("full").execute();
         List<GmailMessage> messages = new ArrayList<>();
         if (thread.getMessages() == null) return messages;
         for (Message msg : thread.getMessages()) {

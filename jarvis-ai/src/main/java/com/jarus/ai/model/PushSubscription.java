@@ -1,9 +1,20 @@
 package com.jarus.ai.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "push_subscriptions")
 public class PushSubscription {
+
+    @Id
     private String id;
+
+    @Column(name = "user_id", nullable = false)
     private String userId;
+
+    @Column(length = 1000)
     private String endpoint;
+
     private String p256dh;
     private String auth;
     private long createdAt;

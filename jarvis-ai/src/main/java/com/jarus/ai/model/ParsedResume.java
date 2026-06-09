@@ -1,16 +1,32 @@
 package com.jarus.ai.model;
 
+import com.jarus.ai.config.JpaConverters;
+import jakarta.persistence.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "parsed_resumes")
 public class ParsedResume {
+
+    @Id
     private String id;
+
+    @Column(name = "user_id", nullable = false)
     private String userId;
+
     private String fileName;
-    private String fileType; // PDF, DOCX, TXT
+    private String fileType;
+
+    @Column(columnDefinition = "TEXT")
     private String fullText;
+
+    @Convert(converter = JpaConverters.ResumeSectionListConverter.class)
+    @Column(columnDefinition = "TEXT")
     private List<ResumeSection> sections = new ArrayList<>();
-    private String gcsPath;
+
+    private String gcsPath; // Cloudinary public ID
     private long uploadedAt;
 
     public ParsedResume() {}
