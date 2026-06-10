@@ -4,13 +4,13 @@ const APP_SHELL = [
   '/',
   '/index.html',
   '/css/jarus.css',
-  '/js/main.js?v=3',
-  '/js/resume.js?v=3',
-  '/js/jobs.js?v=3',
-  '/js/pipeline.js?v=3',
-  '/js/email.js?v=3',
-  '/js/settings.js?v=3',
-  '/js/music.js?v=3',
+  '/js/main.js?v=4',
+  '/js/resume.js?v=4',
+  '/js/jobs.js?v=4',
+  '/js/pipeline.js?v=4',
+  '/js/email.js?v=4',
+  '/js/settings.js?v=4',
+  '/js/music.js?v=4',
   '/manifest.json'
 ];
 
