@@ -9,6 +9,7 @@ const Resume = (() => {
     setupDropzone();
     loadResumes();
     loadJobsForSelect();
+    loadCoverLetters();
   }
 
   function setupDropzone() {
@@ -145,6 +146,34 @@ const Resume = (() => {
     loadResumes();
   }
 
-  window.Resume = { init, tailor, download, delete: deleteResume };
+  async function loadCoverLetters() {
+    const el = document.getElementById('coverLetterList');
+    if (!el) return;
+    try {
+      const res = await fetch('/api/cover-letter/list');
+      if (!res.ok) return;
+      const letters = await res.json();
+      if (letters.length === 0) {
+        el.innerHTML = '<p style="color:var(--text-muted);font-size:.9rem">No cover letters yet. Generate one from the Jobs tab.</p>';
+        return;
+      }
+      el.innerHTML = letters.map(cl => `
+        <div class="job-card" style="margin-bottom:.5rem">
+          <div class="job-card-body">
+            <div class="job-title" style="font-size:.88rem">Cover Letter</div>
+            <div class="job-meta">${new Date(cl.createdAt).toLocaleDateString()}</div>
+          </div>
+          <div style="display:flex;gap:.5rem;align-self:center">
+            <button class="btn-secondary" style="padding:.3rem .7rem;font-size:.8rem"
+              onclick="window.location.href='/api/cover-letter/download/${cl.id}?format=pdf'">PDF</button>
+            <button class="btn-secondary" style="padding:.3rem .7rem;font-size:.8rem"
+              onclick="window.location.href='/api/cover-letter/download/${cl.id}?format=docx'">DOCX</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) { console.error(e); }
+  }
+
+  window.Resume = { init, tailor, download, loadCoverLetters, delete: deleteResume };
   return { init, tailor, download };
 })();

@@ -89,15 +89,61 @@ const Jobs = (() => {
   }
 
   async function coverLetter(jobId) {
-    const resumeId = prompt('Enter resume ID (check Resume tab):');
-    if (!resumeId) return;
-    const res = await fetch('/api/cover-letter/generate', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ resumeId, jobId })
-    });
-    if (res.ok) { alert('Cover letter generated! Check Settings > Downloads.'); }
-    else { alert(await res.text()); }
+    // Load available resumes first
+    let resumes = [];
+    try {
+      const r = await fetch('/api/resume/list');
+      if (r.ok) resumes = await r.json();
+    } catch (e) {}
+    if (resumes.length === 0) {
+      alert('No resumes found. Upload one in the Resume tab first.');
+      return;
+    }
+
+    // Show inline modal for resume selection
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:#0d1b2a;border:1px solid rgba(0,212,255,.3);border-radius:10px;padding:1.5rem;min-width:300px;max-width:440px;width:90%">
+        <h3 style="color:#00d4ff;margin-bottom:1rem;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em">Generate Cover Letter</h3>
+        <label style="display:block;font-size:.8rem;color:#5a7a9a;margin-bottom:.3rem">Choose resume</label>
+        <select id="_clResume" style="width:100%;background:#0a1525;border:1px solid rgba(0,212,255,.25);color:#c8d8e8;padding:.5rem .75rem;border-radius:5px;font-size:.9rem;margin-bottom:1rem">
+          ${resumes.map(r => `<option value="${r.id}">${App.esc(r.fileName)}</option>`).join('')}
+        </select>
+        <div id="_clProgress" style="display:none;color:#5a7a9a;font-size:.85rem;margin-bottom:.75rem">⏳ Generating with Gemini AI…</div>
+        <div style="display:flex;gap:.75rem">
+          <button id="_clGenBtn" style="flex:1;padding:.55rem;background:#00d4ff;color:#000;border:none;border-radius:5px;font-weight:700;cursor:pointer">Generate</button>
+          <button id="_clCancelBtn" style="padding:.55rem 1rem;background:transparent;color:#5a7a9a;border:1px solid rgba(0,212,255,.2);border-radius:5px;cursor:pointer">Cancel</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('_clCancelBtn').onclick = () => overlay.remove();
+    document.getElementById('_clGenBtn').onclick = async () => {
+      const resumeId = document.getElementById('_clResume').value;
+      const btn = document.getElementById('_clGenBtn');
+      const progress = document.getElementById('_clProgress');
+      btn.disabled = true; btn.textContent = '⏳';
+      progress.style.display = 'block';
+      try {
+        const res = await fetch('/api/cover-letter/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resumeId, jobId })
+        });
+        overlay.remove();
+        if (!res.ok) { alert(await res.text()); return; }
+        const cl = await res.json();
+        // Offer immediate download
+        const fmt = confirm('Cover letter generated!\n\nClick OK to download PDF, or Cancel to download DOCX.');
+        window.location.href = '/api/cover-letter/download/' + cl.id + '?format=' + (fmt ? 'pdf' : 'docx');
+        // Refresh cover letters list if Resume tab has loaded it
+        if (window.Resume && Resume.loadCoverLetters) Resume.loadCoverLetters();
+      } catch (e) {
+        overlay.remove();
+        alert('Failed: ' + e.message);
+      }
+    };
   }
 
   async function deleteJob(id) {
