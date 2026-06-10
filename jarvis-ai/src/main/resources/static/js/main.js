@@ -126,8 +126,6 @@ const App = (() => {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // Expose globally
-  window.App = { init, switchTab, scanJobs, scoreBadge, esc };
   return { init, switchTab, scanJobs, scoreBadge, esc };
 })();
 

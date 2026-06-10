@@ -88,6 +88,5 @@ const Pipeline = (() => {
     closeNotes();
   }
 
-  window.Pipeline = { load, openNotes, closeNotes, saveNotes };
-  return { load };
+  return { load, openNotes, closeNotes, saveNotes };
 })();

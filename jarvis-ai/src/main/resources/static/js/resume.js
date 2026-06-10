@@ -174,6 +174,5 @@ const Resume = (() => {
     } catch (e) { console.error(e); }
   }
 
-  window.Resume = { init, tailor, download, loadCoverLetters, delete: deleteResume };
-  return { init, tailor, download };
+  return { init, tailor, download, loadCoverLetters, delete: deleteResume };
 })();

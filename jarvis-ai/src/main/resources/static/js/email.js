@@ -71,6 +71,5 @@ const Email = (() => {
     }
   });
 
-  window.Email = { load, openThread, closeThread };
-  return { load };
+  return { load, openThread, closeThread };
 })();

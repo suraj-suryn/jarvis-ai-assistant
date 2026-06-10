@@ -121,6 +121,5 @@ const Settings = (() => {
     return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
   }
 
-  window.Settings = { init, save, saveKey, subscribePush, deleteAccount };
-  return { init };
+  return { init, save, saveKey, subscribePush, deleteAccount };
 })();

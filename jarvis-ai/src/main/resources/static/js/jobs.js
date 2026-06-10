@@ -162,6 +162,5 @@ const Jobs = (() => {
     }
   });
 
-  window.Jobs = { load, tailor, research, coverLetter, deleteJob, showBookmarklet };
-  return { load };
+  return { load, tailor, research, coverLetter, deleteJob, showBookmarklet };
 })();
