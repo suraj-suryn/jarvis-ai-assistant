@@ -1,15 +1,15 @@
 /* JARUS Service Worker */
-const CACHE_NAME = 'jarus-v1';
+const CACHE_NAME = 'jarus-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/css/jarus.css',
-  '/js/main.js',
-  '/js/resume.js',
-  '/js/jobs.js',
-  '/js/pipeline.js',
-  '/js/email.js',
-  '/js/settings.js',
+  '/js/main.js?v=2',
+  '/js/resume.js?v=2',
+  '/js/jobs.js?v=2',
+  '/js/pipeline.js?v=2',
+  '/js/email.js?v=2',
+  '/js/settings.js?v=2',
   '/manifest.json'
 ];
 
