@@ -79,15 +79,26 @@
             <select id="tailorResumeSelect" class="select-input"><option value="">Select resume…</option></select>
             <select id="tailorJobSelect" class="select-input"><option value="">Select job…</option></select>
             <button class="btn-primary" onclick="Resume.tailor()">✨ Tailor with AI</button>
-            <div id="tailorProgress" class="hidden">Tailoring with Gemini AI…</div>
+            <div id="tailorProgress" class="tailor-progress hidden">
+              <span class="tailor-spinner"></span>
+              <span id="tailorProgressMsg">Tailoring with Gemini AI…</span>
+            </div>
+          </div>
+          <div id="tailorSummary" class="card hidden">
+            <div id="tailorScoreBar"></div>
+            <div id="tailorChangesList"></div>
+            <div class="download-row">
+              <button class="btn-secondary" onclick="Resume.download('pdf')">⬇ PDF</button>
+              <button class="btn-secondary" onclick="Resume.download('docx')">⬇ DOCX</button>
+              <button class="btn-primary" id="genCoverFromTailor" onclick="Resume.genCoverFromTailor()" style="margin-left:auto">✍ Generate Cover Letter</button>
+            </div>
           </div>
           <div id="diffView" class="card hidden">
-            <h3>Resume Diff</h3>
-            <div id="diffContent"></div>
-            <div class="download-row">
-              <button class="btn-secondary" onclick="Resume.download('pdf')">⬇ Download PDF</button>
-              <button class="btn-secondary" onclick="Resume.download('docx')">⬇ Download DOCX</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+              <h3 style="margin:0">Resume Diff</h3>
+              <span id="diffCount" class="badge" style="background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent-border);padding:.15rem .55rem;border-radius:4px;font-size:.78rem"></span>
             </div>
+            <div id="diffContent"></div>
           </div>
           <div class="card" id="coverLetterCard">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">

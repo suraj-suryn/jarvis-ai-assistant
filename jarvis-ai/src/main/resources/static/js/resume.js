@@ -94,12 +94,24 @@ const Resume = (() => {
 
   async function tailor() {
     const resumeId = document.getElementById('tailorResumeSelect').value;
-    const jobId = document.getElementById('tailorJobSelect').value;
+    const jobId    = document.getElementById('tailorJobSelect').value;
     if (!resumeId || !jobId) { alert('Please select a resume and a job'); return; }
+
     const progress = document.getElementById('tailorProgress');
+    const msgEl    = document.getElementById('tailorProgressMsg');
+    const steps    = ['Sending to Gemini AI…', 'Analysing job description…', 'Tailoring sections…', 'Generating documents…'];
+    let stepIdx = 0;
+    if (msgEl) msgEl.textContent = steps[0];
     progress.classList.remove('hidden');
+    document.getElementById('tailorSummary').classList.add('hidden');
     document.getElementById('diffView').classList.add('hidden');
     if (window.MusicPlayer) MusicPlayer.start();
+
+    const stepTimer = setInterval(() => {
+      stepIdx = Math.min(stepIdx + 1, steps.length - 1);
+      if (msgEl) msgEl.textContent = steps[stepIdx];
+    }, 3500);
+
     try {
       const res = await fetch('/api/resume/tailor', {
         method: 'POST',
@@ -115,32 +127,82 @@ const Resume = (() => {
       }
       const tailored = await res.json();
       currentTailoredId = tailored.id;
+      renderSummary(tailored);
       renderDiff(tailored);
     } catch (e) {
       alert('Tailor failed: ' + e.message);
     } finally {
+      clearInterval(stepTimer);
       progress.classList.add('hidden');
       if (window.MusicPlayer) MusicPlayer.stop();
     }
   }
 
+  function renderSummary(tailored) {
+    const summaryEl = document.getElementById('tailorSummary');
+    const scoreEl   = document.getElementById('tailorScoreBar');
+    const listEl    = document.getElementById('tailorChangesList');
+
+    // Score bar
+    const score = tailored.matchScore;
+    if (score != null) {
+      const cls = score >= 75 ? 'score-bar-high' : score >= 50 ? 'score-bar-mid' : 'score-bar-low';
+      scoreEl.innerHTML = `
+        <div class="score-bar-wrap">
+          <div class="score-bar-label"><span>Match Score</span><strong>${score}%</strong></div>
+          <div class="score-bar-track"><div class="score-bar-fill ${cls}" style="width:${score}%"></div></div>
+        </div>`;
+    } else {
+      scoreEl.innerHTML = '';
+    }
+
+    // Changes summary list
+    const changes  = tailored.changesSummary || [];
+    const modified = (tailored.modifiedSections || []).filter(s => s.wasModified).length;
+    const total    = (tailored.modifiedSections || []).length;
+    listEl.innerHTML = `
+      <p style="font-size:.82rem;color:var(--text-muted);margin:0 0 .5rem">
+        <strong style="color:var(--accent)">${modified}</strong> of ${total} sections updated
+      </p>
+      ${changes.length ? '<ul class="tailor-changes">' + changes.map(c => `<li>${App.esc(c)}</li>`).join('') + '</ul>' : ''}`;
+
+    summaryEl.classList.remove('hidden');
+  }
+
   function renderDiff(tailored) {
     const container = document.getElementById('diffContent');
+    const countEl   = document.getElementById('diffCount');
     if (!container) return;
+
     const sections = tailored.modifiedSections || [];
-    container.innerHTML = sections.map(sec => `
-      <div class="diff-section">
-        <div class="diff-section-title">${App.esc(sec.name)}</div>
-        ${sec.wasModified ? `
-          <div class="diff-original">${App.esc(sec.originalContent)}</div>
-          <div class="diff-modified">▶ ${App.esc(sec.modifiedContent)}</div>
-          ${sec.changeReason ? `<div class="hint" style="margin-top:.3rem">${App.esc(sec.changeReason)}</div>` : ''}
-        ` : `
-          <div class="diff-unchanged">${App.esc(sec.originalContent)}</div>
-        `}
-      </div>
-    `).join('');
+    const nChanged = sections.filter(s => s.wasModified).length;
+    if (countEl) countEl.textContent = nChanged + ' changed';
+
+    container.innerHTML = sections.map((sec, i) => {
+      const changed = sec.wasModified;
+      return `
+        <div class="diff-section">
+          <div class="diff-section-header" onclick="this.nextElementSibling.classList.toggle('open')">
+            <span class="diff-section-title">${App.esc(sec.name)}</span>
+            <span class="diff-section-badge ${changed ? 'diff-badge-changed' : 'diff-badge-ok'}">${changed ? 'CHANGED' : 'OK'}</span>
+          </div>
+          <div class="diff-section-body${(i === 0 || changed) ? ' open' : ''}">
+            ${changed ? `
+              <div class="diff-original">${App.esc(sec.originalContent)}</div>
+              <div class="diff-modified">${App.esc(sec.modifiedContent)}</div>
+              ${sec.changeReason ? `<div class="diff-reason">${App.esc(sec.changeReason)}</div>` : ''}
+            ` : `<div class="diff-unchanged">${App.esc(sec.originalContent)}</div>`}
+          </div>
+        </div>`;
+    }).join('');
+
     document.getElementById('diffView').classList.remove('hidden');
+  }
+
+  function genCoverFromTailor() {
+    const jobId    = document.getElementById('tailorJobSelect').value;
+    const resumeId = document.getElementById('tailorResumeSelect').value;
+    writeCoverLetter({ prefillJobId: jobId || null, resumeId: resumeId || null });
   }
 
   function download(format) {
@@ -230,17 +292,7 @@ const Resume = (() => {
     else alert('Delete failed');
   }
 
-  function writeCoverLetter() {
-    let jobsCache = [];
-    fetch('/api/jobs').then(r => r.ok ? r.json() : []).then(jobs => {
-      jobsCache = jobs;
-      const sel = overlay.querySelector('#_clWriteJob');
-      if (sel) {
-        sel.innerHTML = '<option value="">No specific job</option>'
-          + jobs.map(j => `<option value="${j.id}">${App.esc(j.title + ' — ' + j.company)}</option>`).join('');
-      }
-    }).catch(() => {});
-
+  function writeCoverLetter(opts = {}) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem';
     overlay.innerHTML = `
@@ -254,7 +306,11 @@ const Resume = (() => {
           <option value="">Loading jobs…</option>
         </select>
         <label style="font-size:.78rem;color:#5a7a9a;margin-bottom:.3rem">Cover letter content</label>
-        <textarea id="_clWriteText" placeholder="Dear Hiring Manager,&#10;&#10;I am writing to express my interest in…" style="flex:1;min-height:260px;background:#0a1525;border:1px solid rgba(0,212,255,.25);color:#c8d8e8;padding:.65rem .75rem;border-radius:5px;font-size:.87rem;line-height:1.6;resize:vertical;margin-bottom:.75rem;font-family:inherit"></textarea>
+        <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+          <button id="_clAiGenBtn" style="padding:.35rem .85rem;background:var(--accent-glow);border:1px solid var(--accent-border);color:var(--accent);border-radius:5px;cursor:pointer;font-size:.8rem;font-weight:600">✨ Generate with AI</button>
+          <span id="_clAiStatus" style="font-size:.78rem;color:var(--text-muted);align-self:center"></span>
+        </div>
+        <textarea id="_clWriteText" placeholder="Dear Hiring Manager,&#10;&#10;I am writing to express my interest in…" style="flex:1;min-height:240px;background:#0a1525;border:1px solid rgba(0,212,255,.25);color:#c8d8e8;padding:.65rem .75rem;border-radius:5px;font-size:.87rem;line-height:1.6;resize:vertical;margin-bottom:.75rem;font-family:inherit"></textarea>
         <div id="_clWriteErr" style="display:none;color:#ff6b6b;font-size:.82rem;margin-bottom:.5rem"></div>
         <div style="display:flex;gap:.75rem;justify-content:flex-end">
           <button onclick="this.closest('.cl-write-overlay').remove()" style="padding:.5rem 1rem;background:transparent;color:#5a7a9a;border:1px solid rgba(0,212,255,.2);border-radius:5px;cursor:pointer;font-size:.85rem">Cancel</button>
@@ -271,14 +327,49 @@ const Resume = (() => {
       if (sel) {
         sel.innerHTML = '<option value="">No specific job</option>'
           + jobs.map(j => `<option value="${j.id}">${App.esc(j.title + ' — ' + j.company)}</option>`).join('');
+        if (opts.prefillJobId) sel.value = opts.prefillJobId;
       }
     }).catch(() => {});
 
+    // AI generate button
+    document.getElementById('_clAiGenBtn').onclick = async () => {
+      const jobId    = document.getElementById('_clWriteJob').value;
+      const statusEl = document.getElementById('_clAiStatus');
+      const btn      = document.getElementById('_clAiGenBtn');
+      // Resolve resumeId: prefer passed opts, then fallback to first resume
+      let resolvedResumeId = opts.resumeId || null;
+      if (!resolvedResumeId && resumes.length > 0) resolvedResumeId = resumes[0].id;
+      if (!resolvedResumeId || !jobId) {
+        statusEl.textContent = resolvedResumeId ? '⚠ Select a job first' : '⚠ Upload a resume first';
+        return;
+      }
+      btn.disabled = true; statusEl.textContent = 'Generating…';
+      try {
+        const res = await fetch('/api/cover-letter/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resumeId: resolvedResumeId, jobId })
+        });
+        if (!res.ok) {
+          if (res.status === 402) statusEl.textContent = '⚠ Gemini key not configured';
+          else statusEl.textContent = 'Failed: ' + await res.text();
+        } else {
+          const data = await res.json();
+          document.getElementById('_clWriteText').value = data.content || '';
+          statusEl.textContent = '✓ Generated';
+        }
+      } catch (e) {
+        statusEl.textContent = 'Error: ' + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
     document.getElementById('_clWriteSave').onclick = async () => {
       const content = document.getElementById('_clWriteText').value.trim();
-      const jobId = document.getElementById('_clWriteJob').value || null;
-      const errEl = document.getElementById('_clWriteErr');
-      const btn = document.getElementById('_clWriteSave');
+      const jobId   = document.getElementById('_clWriteJob').value || null;
+      const errEl   = document.getElementById('_clWriteErr');
+      const btn     = document.getElementById('_clWriteSave');
       if (!content) { errEl.textContent = 'Please enter cover letter content.'; errEl.style.display = 'block'; return; }
       errEl.style.display = 'none';
       btn.disabled = true; btn.textContent = '⏳ Saving…';
@@ -298,5 +389,5 @@ const Resume = (() => {
     };
   }
 
-  return { init, tailor, download, loadCoverLetters, viewCoverLetter, deleteCoverLetter, writeCoverLetter, delete: deleteResume };
+  return { init, tailor, download, loadCoverLetters, viewCoverLetter, deleteCoverLetter, writeCoverLetter, genCoverFromTailor, delete: deleteResume };
 })();
