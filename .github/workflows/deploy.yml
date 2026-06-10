@@ -25,6 +25,7 @@ jobs:
           echo "Build succeeded ✓"
 
       - name: Sync env vars to Render
+        continue-on-error: true
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
