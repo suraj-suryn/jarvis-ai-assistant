@@ -46,6 +46,9 @@ public class SettingsController {
         Map<String, Object> attrs = token.getPrincipal().getAttributes();
         UserSettings settings = userRepository.getSettings(userId);
 
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
         Map<String, Object> response = new java.util.HashMap<>();
         response.put("userId", userId);
         response.put("email", attrs.get("email"));
@@ -57,6 +60,7 @@ public class SettingsController {
         response.put("scanTimeHour", settings.getScanTimeHour());
         response.put("defaultResumeId", settings.getDefaultResumeId());
         response.put("geminiKeyConfigured", settings.getEncryptedGeminiKey() != null);
+        response.put("isAdmin", isAdmin);
         return ResponseEntity.ok(response);
     }
 

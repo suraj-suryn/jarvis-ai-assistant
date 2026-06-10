@@ -55,13 +55,36 @@ public class ResumeBuilderService {
         }
     }
 
+    /**
+     * Sanitize text for PDType1Font (latin-1 only). Replaces common Unicode
+     * characters with ASCII equivalents and strips any remaining non-latin1 chars.
+     */
+    private String sanitizeForPdf(String text) {
+        if (text == null) return "";
+        StringBuilder sb = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            switch (c) {
+                case 0x2018: case 0x2019: case 0x201A: case 0x201B: sb.append('\''); break; // curly single quotes
+                case 0x201C: case 0x201D: case 0x201E: case 0x201F: sb.append('"'); break;  // curly double quotes
+                case 0x2013: case 0x2014: case 0x2012: case 0x2015: sb.append('-'); break;  // dashes
+                case 0x2022: case 0x2023: case 0x2024: case 0x2043: sb.append('*'); break;  // bullets
+                case 0x2026: sb.append("..."); break;                                         // ellipsis
+                case 0x00A0: sb.append(' '); break;                                           // non-breaking space
+                default:
+                    if (c <= 0xFF) sb.append(c);
+                    else sb.append('?');
+            }
+        }
+        return sb.toString();
+    }
+
     public byte[] generatePdf(TailoredResume tailored) throws IOException {
         try (PDDocument doc = new PDDocument();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             float margin = 50;
             float yStart = PDRectangle.A4.getHeight() - margin;
             float yPos = yStart;
-            float pageWidth = PDRectangle.A4.getWidth() - 2 * margin;
             float lineHeight = 14;
 
             PDPage page = new PDPage(PDRectangle.A4);
@@ -93,7 +116,7 @@ public class ResumeBuilderService {
                     stream.setFont(boldFont, 12);
                     stream.beginText();
                     stream.newLineAtOffset(margin, yPos);
-                    stream.showText(section.getName());
+                    stream.showText(sanitizeForPdf(section.getName()));
                     stream.endText();
                     yPos -= lineHeight + 2;
 
@@ -112,10 +135,11 @@ public class ResumeBuilderService {
                                 yPos = yStart;
                                 stream.setFont(normalFont, 10);
                             }
-                            String truncated = line.length() > 100 ? line.substring(0, 97) + "..." : line;
+                            String sanitized = sanitizeForPdf(line.replace("\r", ""));
+                            String truncated = sanitized.length() > 100 ? sanitized.substring(0, 97) + "..." : sanitized;
                             stream.beginText();
                             stream.newLineAtOffset(margin, yPos);
-                            stream.showText(truncated.replace("\r", ""));
+                            stream.showText(truncated);
                             stream.endText();
                             yPos -= lineHeight;
                         }

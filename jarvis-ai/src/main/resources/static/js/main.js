@@ -55,7 +55,7 @@ const App = (() => {
       if (name) name.textContent = userInfo.name || userInfo.email;
 
       // Show admin tab if applicable
-      if (userInfo.roles && userInfo.roles.includes('ADMIN')) {
+      if (userInfo.isAdmin) {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
       }
     } catch (e) {

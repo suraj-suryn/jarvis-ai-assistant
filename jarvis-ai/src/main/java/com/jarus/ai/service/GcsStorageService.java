@@ -17,11 +17,12 @@ public class GcsStorageService {
 
     public String upload(byte[] data, String path, String contentType) {
         try {
-            String publicId = path.replace("/", "_").replace(".", "_");
             Map<?, ?> result = cloudinary.uploader().upload(data,
                     ObjectUtils.asMap(
-                            "public_id", publicId,
-                            "resource_type", "raw"
+                            "public_id", path,
+                            "resource_type", "raw",
+                            "use_filename", false,
+                            "unique_filename", false
                     ));
             return (String) result.get("public_id");
         } catch (IOException e) {
