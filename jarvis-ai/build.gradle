@@ -9,9 +9,8 @@ version = '1.0.0'
 description = 'JARUS - AI-powered Job Hunt & Career Assistant'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
