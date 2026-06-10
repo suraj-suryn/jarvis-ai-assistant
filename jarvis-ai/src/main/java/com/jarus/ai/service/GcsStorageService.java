@@ -32,9 +32,11 @@ public class GcsStorageService {
 
     public byte[] download(String publicId) {
         try {
-            String url = cloudinary.url().resourceType("raw").generate(publicId);
-            return new URL(url).openStream().readAllBytes();
-        } catch (IOException e) {
+            // Generate a signed URL — required for raw uploads on restricted Cloudinary accounts
+            String signedUrl = cloudinary.privateDownload(publicId, null,
+                    ObjectUtils.asMap("resource_type", "raw", "attachment", false));
+            return new URL(signedUrl).openStream().readAllBytes();
+        } catch (Exception e) {
             throw new RuntimeException("File download failed", e);
         }
     }
