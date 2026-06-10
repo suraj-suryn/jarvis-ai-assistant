@@ -30,8 +30,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(
-                    "/api/jobs/capture",   // bookmarklet cross-origin POST
-                    "/api/push/**",
+                    "/api/**",             // SPA: session cookie auth, CSRF not needed for same-origin API
                     "/actuator/**"))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_PATHS).permitAll()
