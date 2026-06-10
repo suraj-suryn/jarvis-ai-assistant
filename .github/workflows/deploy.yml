@@ -24,6 +24,42 @@ jobs:
           ./gradlew bootJar --no-daemon
           echo "Build succeeded ✓"
 
+      - name: Sync env vars to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          APP_ENCRYPTION_SECRET: ${{ secrets.APP_ENCRYPTION_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: |
+          python3 -c "
+          import json, os, urllib.request, urllib.error
+          service_id = 'srv-d8kdmsldt1ts739ut3sg'
+          keys = [
+              'GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET',
+              'APP_ENCRYPTION_SECRET', 'ADMIN_EMAIL', 'DATABASE_URL',
+              'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'
+          ]
+          payload = [{'key': k, 'value': os.environ.get(k, '')} for k in keys]
+          data = json.dumps(payload).encode()
+          req = urllib.request.Request(
+              f'https://api.render.com/v1/services/{service_id}/env-vars',
+              data=data, method='PUT'
+          )
+          req.add_header('Authorization', 'Bearer ' + os.environ['RENDER_API_KEY'])
+          req.add_header('Content-Type', 'application/json')
+          try:
+              res = urllib.request.urlopen(req)
+              print('Env vars synced to Render ✓ Status:', res.status)
+          except urllib.error.HTTPError as e:
+              print('Render env-var sync failed:', e.code, e.read().decode())
+              raise
+          "
+
       - name: Deploy to Render
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

@@ -17,7 +17,7 @@ public class SecurityConfig {
     private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     private static final String[] PUBLIC_PATHS = {
-            "/", "/login", "/access-denied.html",
+            "/", "/login", "/login.html", "/access-denied.html",
             "/oauth2/**", "/login/oauth2/**",
             "/actuator/health",
             "/error",
@@ -38,8 +38,9 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login.html")
                 .successHandler(oAuth2LoginSuccessHandler)
-                .failureUrl("/login?error=true"))
+                .failureUrl("/login.html?error=true"))
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
