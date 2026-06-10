@@ -1,5 +1,5 @@
 /* ============================================================
-   JARUS — Dark HUD Theme
+   JARUS — Dark HUD Theme (default) + Light Mode
    ============================================================ */
 :root {
   --bg:           #060d1a;
@@ -16,6 +16,31 @@
   --gold:         #ffd700;
   --font:         'Segoe UI', system-ui, sans-serif;
 }
+
+/* -------- LIGHT MODE -------- */
+body.light-mode {
+  --bg:           #f4f6fa;
+  --bg-card:      #ffffff;
+  --bg-input:     #eef1f6;
+  --accent:       #0077cc;
+  --accent-glow:  rgba(0,119,204,0.10);
+  --accent-border:rgba(0,119,204,0.30);
+  --text:         #1a2533;
+  --text-muted:   #607080;
+  --success:      #1a7a3a;
+  --warning:      #c07800;
+  --danger:       #cc2222;
+  --gold:         #9a6e00;
+}
+body.light-mode .hud-header {
+  background: rgba(255,255,255,0.97);
+  border-bottom-color: var(--accent-border);
+}
+body.light-mode .code-block { background: #1e2a38; color: #7ec87e; }
+body.light-mode .kanban-card { background: #edf0f7; }
+body.light-mode .side-panel { background: #fff; }
+body.light-mode .music-widget { background: rgba(255,255,255,0.95); }
+body.light-mode .music-widget select option { background: #fff; color: #1a2533; }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
 a { color: var(--accent); text-decoration: none; }
@@ -39,6 +64,12 @@ a:hover { text-decoration: underline; }
 .avatar { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--accent); }
 .logout-btn { font-size: 0.8rem; color: var(--text-muted); border: 1px solid var(--accent-border); padding: 0.2rem 0.6rem; border-radius: 4px; }
 .logout-btn:hover { color: var(--danger); border-color: var(--danger); text-decoration: none; }
+.theme-toggle-btn {
+  background: transparent; border: 1px solid var(--accent-border);
+  color: var(--text-muted); padding: 0.2rem 0.5rem; border-radius: 4px;
+  font-size: 1rem; cursor: pointer; transition: all 0.2s; line-height: 1.4;
+}
+.theme-toggle-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
 
 /* -------- TAB NAV -------- */
 .tab-nav { display: flex; gap: 0.25rem; flex-wrap: wrap; }

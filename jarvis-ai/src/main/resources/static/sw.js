@@ -1,5 +1,5 @@
 /* JARUS Service Worker */
-const CACHE_NAME = 'jarus-v3';
+const CACHE_NAME = 'jarus-v4';
 const APP_SHELL = [
   '/',
   '/index.html',

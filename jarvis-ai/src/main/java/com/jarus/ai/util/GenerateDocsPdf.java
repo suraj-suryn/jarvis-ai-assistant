@@ -107,6 +107,7 @@ public class GenerateDocsPdf {
         buildSection5UnitTests();
         buildSection6BuildDeploy();
         buildSection7Workflow();
+        buildSection8UIButtons();
         closeStream();
         addPageNumbers();
         protect(password);
@@ -176,6 +177,7 @@ public class GenerateDocsPdf {
             {"5", "Unit Test Suite",            "26 tests across 3 classes — full reference"},
             {"6", "Build & Deploy Guide",       "Local build, Docker, and Render deployment"},
             {"7", "Development Workflow",       "Git flow, conventions, and contribution guide"},
+            {"8", "UI Button Reference",         "Every tab, button, and action in the JARUS UI"},
         };
 
         for (int i = 0; i < toc.length; i++) {
@@ -672,6 +674,225 @@ public class GenerateDocsPdf {
             "git add docs/JARUS_Documentation.pdf",
             "git commit -m \"docs: regenerate JARUS documentation PDF\"",
         });
+    }
+
+    // ════════════════════════════════════════════════════════════════════════════
+    //  Section 8 — UI Button Reference
+    // ════════════════════════════════════════════════════════════════════════════
+
+    private void buildSection8UIButtons() throws IOException {
+        newPage();
+        sectionTitle("8", "UI Button Reference");
+
+        para("This section documents every interactive control in the JARUS single-page application "
+           + "(index.html). Buttons are grouped by tab / area so team members and users can quickly "
+           + "locate any action.");
+
+        // ── Header bar ────────────────────────────────────────────────────────
+        subHeader("8.1  Header Bar (always visible)");
+        buttonTable(new String[][]{
+            {"Theme Toggle ([Moon] / [Sun])",
+             "Switches between dark (default) and light colour scheme. "
+             + "Preference is persisted in localStorage as 'jarus_theme'."},
+            {"Sign Out",
+             "Calls GET /logout, invalidates the server-side session, and redirects the "
+             + "browser to /login (Google OAuth2 login page)."},
+        });
+
+        // ── Dashboard tab ─────────────────────────────────────────────────────
+        subHeader("8.2  Dashboard Tab");
+        buttonTable(new String[][]{
+            {"Scan New Jobs",
+             "POST /api/jobs/scan — triggers the scheduled job scraper immediately. "
+             + "Displays count of newly discovered postings next to the button."},
+            {"Resume tab",
+             "Navigation tab — switches to the Resume tab and lazy-loads Resume.init()."},
+            {"Jobs tab",
+             "Navigation tab — switches to the Jobs tab and lazy-loads Jobs.load()."},
+            {"Pipeline tab",
+             "Navigation tab — switches to the Pipeline (Kanban) tab and lazy-loads Pipeline.load()."},
+            {"Email tab",
+             "Navigation tab — switches to the Email/Cover-Letter tab."},
+            {"Settings tab",
+             "Navigation tab — switches to the Settings tab and lazy-loads Settings.init()."},
+            {"Admin tab",
+             "Visible only to admin users (isAdmin=true). Manages system-wide settings."},
+        });
+
+        // ── Resume tab ────────────────────────────────────────────────────────
+        subHeader("8.3  Resume Tab");
+        buttonTable(new String[][]{
+            {"Upload Resume",
+             "File picker (accept .pdf,.doc,.docx). On confirmation calls "
+             + "POST /api/resume/upload (multipart). Extracts and stores resume text; "
+             + "shows success toast on completion."},
+            {"Download Resume",
+             "GET /api/resume/download — fetches the file from Cloudinary via signed URL "
+             + "and triggers a browser file-save dialog."},
+            {"Tailor for This Job  (per job-card)",
+             "Opens a job-selector modal. On confirm calls POST /api/resume/tailor "
+             + "with { jobId } and streams back AI-tailored plain-text resume."},
+            {"Match Score  (per job-card)",
+             "POST /api/resume/score — sends resume text + job description to Gemini; "
+             + "returns { score, matchedSkills[], missingSkills[], recommendation }."},
+            {"Copy Tailored Text",
+             "JavaScript clipboard copy of the tailored resume content textarea."},
+        });
+
+        // ── Jobs tab ─────────────────────────────────────────────────────────
+        subHeader("8.4  Jobs Tab");
+        buttonTable(new String[][]{
+            {"Add Job (+ button)",
+             "Reveals the inline add-job form. Requires Title, Company, and Description fields."},
+            {"Save Job  (form submit)",
+             "POST /api/jobs — persists a new JobPost entity; refreshes the job list on success."},
+            {"Edit  (pencil icon, per card)",
+             "Populates the edit form with existing job data. Save calls PUT /api/jobs/{id}."},
+            {"Delete  (bin icon, per card)",
+             "DELETE /api/jobs/{id} after a confirmation prompt. Removes card from UI."},
+            {"Research Company  (per card)",
+             "POST /api/company/research — sends company name + job title to Gemini; "
+             + "returns company overview, news, interview questions, etc."},
+            {"View Details  (per card)",
+             "Expands the job card to show full description, applied date, and notes."},
+        });
+
+        // ── Pipeline (Kanban) tab ─────────────────────────────────────────────
+        subHeader("8.5  Pipeline Tab");
+        buttonTable(new String[][]{
+            {"Drag & Drop card",
+             "Moves a job card between status columns (New > Applied > Interview > Offer > Rejected). "
+             + "Calls PATCH /api/jobs/{id}/status on drop."},
+            {"+ Add Note  (per card)",
+             "Inline text field + Save button; calls PATCH /api/jobs/{id}/notes to persist."},
+            {"Mark Applied  (quick button)",
+             "Shortcut to PATCH /api/jobs/{id}/status with status=APPLIED."},
+            {"Archive",
+             "Sets status=ARCHIVED, hiding the card from active columns."},
+        });
+
+        // ── Email / Cover Letter tab ──────────────────────────────────────────
+        subHeader("8.6  Email / Cover Letter Tab");
+        buttonTable(new String[][]{
+            {"Write Letter  (per job)",
+             "Opens the cover-letter editor modal pre-filled with job details."},
+            {"Generate with AI",
+             "POST /api/cover-letter/generate — sends resume text + job description to Gemini "
+             + "and streams a tailored cover letter into the editor textarea."},
+            {"Save Draft",
+             "POST /api/cover-letter — persists the current editor content to DB."},
+            {"Update",
+             "PUT /api/cover-letter/{id} — overwrites an existing letter draft."},
+            {"Download PDF",
+             "GET /api/cover-letter/{id}/pdf — server renders a DOCX-style PDF and streams "
+             + "it back as application/pdf for download."},
+            {"Download DOCX",
+             "GET /api/cover-letter/{id}/docx — server renders a Word document; "
+             + "browser saves it as cover_letter.docx."},
+            {"Delete  (per card)",
+             "DELETE /api/cover-letter/{id} after confirmation. Removes from list."},
+            {"Copy to Clipboard",
+             "Client-side copy of the letter textarea content."},
+        });
+
+        // ── Settings tab ─────────────────────────────────────────────────────
+        subHeader("8.7  Settings Tab");
+        buttonTable(new String[][]{
+            {"Save API Key",
+             "POST /api/settings/gemini-key — receives raw key, encrypts it AES-256-GCM, "
+             + "and persists to DB. Returns status label next to the field."},
+            {"Verify Key",
+             "POST /api/settings/gemini-key (same endpoint) — immediately calls Gemini "
+             + "to verify; badge shows VERIFIED / RATE_LIMITED / INVALID_KEY / NETWORK_ERROR."},
+            {"Delete Account  (danger zone)",
+             "DELETE /api/settings/account — requires typed confirmation string. "
+             + "Removes all user data (jobs, letters, resume, key) and redirects to /logout."},
+            {"Copy Bookmarklet",
+             "Copies the JavaScript bookmarklet code to clipboard so the user can drag it "
+             + "to the bookmarks bar for one-click job capture from any job board."},
+        });
+
+        // ── Admin tab ────────────────────────────────────────────────────────
+        subHeader("8.8  Admin Tab  (admin users only)");
+        bulletList(new String[]{
+            "View All Users — GET /api/admin/users — lists all registered accounts with stats.",
+            "Impersonate User — switches session context to a chosen user for support.",
+            "Broadcast Message — POST /api/admin/broadcast — sends a notification to all users.",
+            "System Stats — GET /api/admin/stats — shows DB row counts, API usage, storage used.",
+            "Flush Cache — POST /api/admin/cache/flush — clears all in-memory caches.",
+        });
+
+        // ── Music widget ─────────────────────────────────────────────────────
+        subHeader("8.9  Music Widget  (floating, bottom-right)");
+        buttonTable(new String[][]{
+            {"[Play] / [Pause]  Play / Pause",
+             "Toggles playback of the selected lo-fi radio stream via the HTML <audio> element."},
+            {"Track selector  (dropdown)",
+             "Chooses from several built-in lo-fi / focus-music stream URLs. Selection persists "
+             + "in localStorage as 'jarus_music_track'."},
+            {"[X]  Close widget",
+             "Hides the music widget. Can be reopened via the music note icon in the header."},
+        });
+    }
+
+    /** Renders a two-column table of (button name, description) rows. */
+    private void buttonTable(String[][] rows) throws IOException {
+        float nameW = 165f;
+        float descW = CW - nameW - 8;
+        for (int i = 0; i < rows.length; i++) {
+            String name = rows[i][0];
+            String desc = rows[i][1];
+
+            // Estimate height: wrap desc text at ~descW pts, ~10pt line height
+            int descLines = estimateLines(desc, fReg, 9, descW);
+            float rowH = Math.max(descLines * 13f + 10f, 30f);
+
+            ensureSpace(rowH + 4);
+            Color bg = (i % 2 == 0) ? new Color(235, 245, 255) : WHITE;
+            fillRect(ML, y - rowH, CW, rowH, bg);
+            fillRect(ML, y - rowH, nameW, rowH, new Color(220, 235, 250));
+            fillRect(ML + nameW, y - 1, 1, rowH, DIVIDER);
+
+            // Button name — centred vertically, bold
+            float midY = y - rowH / 2f + 4;
+            wrappedText(name, fBold, 9, ML + 6, y - 8, nameW - 12, PRIMARY);
+            // Description
+            wrappedText(desc, fReg, 9, ML + nameW + 8, y - 8, descW - 8, BODY);
+
+            // Bottom border
+            hLine(ML, y - rowH, CW, DIVIDER);
+            y -= rowH;
+        }
+        y -= 8;
+    }
+
+    /** Rough estimate of how many lines text will occupy at given width. */
+    private int estimateLines(String text, PDType1Font font, float size, float maxW) {
+        int words = text.split("\\s+").length;
+        float avgCharW = size * 0.52f;
+        float charsPerLine = maxW / avgCharW;
+        int charsTotal = text.length();
+        return Math.max(1, (int) Math.ceil(charsTotal / charsPerLine));
+    }
+
+    /** Wraps text into multiple lines at maxWidth, drawing from (x, startY) downward. */
+    private void wrappedText(String text, PDType1Font font, float size, float x, float startY,
+                              float maxW, Color col) throws IOException {
+        String[] words = text.split("\\s+");
+        StringBuilder line = new StringBuilder();
+        float curY = startY;
+        for (String w : words) {
+            String test = line.isEmpty() ? w : line + " " + w;
+            float tw = font.getStringWidth(test) / 1000f * size;
+            if (tw > maxW && !line.isEmpty()) {
+                text(line.toString(), font, size, x, curY, col);
+                line = new StringBuilder(w);
+                curY -= size + 3;
+            } else {
+                line = new StringBuilder(test);
+            }
+        }
+        if (!line.isEmpty()) text(line.toString(), font, size, x, curY, col);
     }
 
     // ════════════════════════════════════════════════════════════════════════════

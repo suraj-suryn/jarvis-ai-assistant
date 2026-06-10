@@ -131,6 +131,37 @@ const App = (() => {
 
 document.addEventListener('DOMContentLoaded', App.init);
 
+// ── Light / Dark Theme toggle ─────────────────────────────────────────────────
+const Theme = (() => {
+  const STORAGE_KEY = 'jarus_theme';
+  const BTN_ID = 'themeToggleBtn';
+
+  function apply(mode) {
+    if (mode === 'light') {
+      document.body.classList.add('light-mode');
+      const btn = document.getElementById(BTN_ID);
+      if (btn) btn.textContent = '☀️';
+    } else {
+      document.body.classList.remove('light-mode');
+      const btn = document.getElementById(BTN_ID);
+      if (btn) btn.textContent = '🌙';
+    }
+  }
+
+  function toggle() {
+    const isLight = document.body.classList.contains('light-mode');
+    const next = isLight ? 'dark' : 'light';
+    localStorage.setItem(STORAGE_KEY, next);
+    apply(next);
+  }
+
+  // Apply saved preference on load
+  const saved = localStorage.getItem(STORAGE_KEY) || 'dark';
+  document.addEventListener('DOMContentLoaded', () => apply(saved));
+
+  return { toggle };
+})();
+
 // Admin tab
 const Admin = {
   async load() {
