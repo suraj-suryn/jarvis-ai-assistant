@@ -51,6 +51,9 @@ dependencies {
 	// RSS Feed Parsing (Indeed jobs)
 	implementation 'com.rometools:rome:2.1.0'
 
+	// Persistent Sessions (survives redeploys)
+	implementation 'org.springframework.session:spring-session-jdbc'
+
 	// Rate Limiting
 	implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
