@@ -70,3 +70,20 @@ tasks.named('test') {
 tasks.named('bootJar') {
 	archiveFileName = 'jarus-ai.jar'
 }
+
+// ── Documentation PDF generator ────────────────────────────────────────────
+// Usage:
+//   ./gradlew generateDocs                            # default password
+//   ./gradlew generateDocs -Ppdf.password=MySecret    # custom password
+// Output: docs/JARUS_Documentation.pdf
+tasks.register('generateDocs', JavaExec) {
+	dependsOn classes
+	group       = 'documentation'
+	description = 'Generate password-protected JARUS documentation PDF'
+	classpath   = sourceSets.main.runtimeClasspath
+	mainClass   = 'com.jarus.ai.util.GenerateDocsPdf'
+	args        = [
+		project.findProperty('pdf.password') ?: 'Jarus@2024',
+		"${projectDir}/docs/JARUS_Documentation.pdf"
+	]
+}
