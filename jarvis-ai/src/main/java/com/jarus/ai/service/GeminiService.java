@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +25,29 @@ public class GeminiService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${gemini.model:gemini-1.5-flash}")
+    @Value("${gemini.model:gemini-2.0-flash}")
     private String geminiModel;
 
     public String chat(String message, String apiKey) {
         return callGemini(message, apiKey);
+    }
+
+    /**
+     * Verifies an API key by making a minimal Gemini call.
+     * Returns: "VERIFIED", "RATE_LIMITED", "INVALID_KEY", or "NETWORK_ERROR".
+     */
+    public String verifyKey(String apiKey) {
+        try {
+            callGemini("Say OK", apiKey);
+            return "VERIFIED";
+        } catch (WebClientResponseException e) {
+            int status = e.getStatusCode().value();
+            if (status == 429) return "RATE_LIMITED";
+            if (status == 400 || status == 401 || status == 403) return "INVALID_KEY";
+            return "NETWORK_ERROR";
+        } catch (Exception e) {
+            return "NETWORK_ERROR";
+        }
     }
 
     public TailoredResume tailorResume(ParsedResume resume, JobPost job, String apiKey) {

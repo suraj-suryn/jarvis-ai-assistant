@@ -67,6 +67,13 @@ const Jobs = (() => {
     }
   }
 
+  function aiErrorMessage(status, text) {
+    if (status === 402) return '⚠ Gemini key not configured. Go to Settings → Gemini API Key to add one.';
+    if (status === 429) return '⚠ Rate limited — please wait a minute and try again.';
+    if (status === 401 || status === 403) return '⚠ Session expired. Please refresh and log in again.';
+    return 'AI error (' + status + '): ' + (text || 'Please try again.');
+  }
+
   function showBookmarklet() {
     const panel = document.getElementById('bookmarkletPanel');
     if (panel) panel.classList.toggle('hidden');
@@ -125,6 +132,7 @@ const Jobs = (() => {
       const progress = document.getElementById('_clProgress');
       btn.disabled = true; btn.textContent = '⏳';
       progress.style.display = 'block';
+      if (window.MusicPlayer) MusicPlayer.start();
       try {
         const res = await fetch('/api/cover-letter/generate', {
           method: 'POST',
@@ -132,7 +140,7 @@ const Jobs = (() => {
           body: JSON.stringify({ resumeId, jobId })
         });
         overlay.remove();
-        if (!res.ok) { alert(await res.text()); return; }
+        if (!res.ok) { alert(aiErrorMessage(res.status, await res.text())); return; }
         const cl = await res.json();
         // Offer immediate download
         const fmt = confirm('Cover letter generated!\n\nClick OK to download PDF, or Cancel to download DOCX.');
@@ -142,6 +150,8 @@ const Jobs = (() => {
       } catch (e) {
         overlay.remove();
         alert('Failed: ' + e.message);
+      } finally {
+        if (window.MusicPlayer) MusicPlayer.stop();
       }
     };
   }

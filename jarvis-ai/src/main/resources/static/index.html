@@ -89,8 +89,11 @@
             </div>
           </div>
           <div class="card" id="coverLetterCard">
-            <h3>Cover Letters</h3>
-            <div id="coverLetterList"><p style="color:var(--text-muted);font-size:.9rem">No cover letters yet. Generate one from the Jobs tab.</p></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+              <h3 style="margin:0">Cover Letters</h3>
+              <button class="btn-secondary" style="font-size:.8rem;padding:.35rem .75rem" onclick="Resume.writeCoverLetter()">✍ Write Manually</button>
+            </div>
+            <div id="coverLetterList"><p style="color:var(--text-muted);font-size:.9rem">No cover letters yet. Generate one from the Jobs tab or write one manually.</p></div>
           </div>
         </div>
       </div>
@@ -238,11 +241,23 @@
 
   </main>
 
-  <script src="/js/main.js?v=2"></script>
-  <script src="/js/resume.js?v=2"></script>
-  <script src="/js/jobs.js?v=2"></script>
-  <script src="/js/pipeline.js?v=2"></script>
-  <script src="/js/email.js?v=2"></script>
-  <script src="/js/settings.js?v=2"></script>
+  <!-- Music Player Widget -->
+  <div id="musicWidget" class="music-widget hidden" aria-label="Ambient music controls">
+    <span class="music-label">🎵</span>
+    <select id="musicTrackSel" title="Select ambient track">
+      <option value="lofi">Lo&#x2011;Fi Pad</option>
+      <option value="drone">Focus Drone</option>
+      <option value="rain">Rain</option>
+    </select>
+    <button id="musicMuteBtn" title="Mute/unmute">🔊</button>
+  </div>
+
+  <script src="/js/main.js?v=3"></script>
+  <script src="/js/resume.js?v=3"></script>
+  <script src="/js/jobs.js?v=3"></script>
+  <script src="/js/pipeline.js?v=3"></script>
+  <script src="/js/email.js?v=3"></script>
+  <script src="/js/settings.js?v=3"></script>
+  <script src="/js/music.js?v=3"></script>
 </body>
 </html>

@@ -28,26 +28,60 @@ const Settings = (() => {
       if (!res.ok) return;
       const data = await res.json();
       const statusEl = document.getElementById('keyStatus');
-      if (statusEl) statusEl.textContent = data.configured ? '✓ Configured' : '⚠ Not configured';
+      if (statusEl) {
+        statusEl.textContent = data.configured ? '✓ Configured' : '⚠ Not configured';
+        statusEl.className = 'key-status ' + (data.configured ? 'key-status-ok' : 'key-status-warn');
+      }
     } catch (e) { console.error(e); }
   }
 
   async function saveKey() {
     const keyInput = document.getElementById('geminiKeyInput');
     const apiKey = keyInput ? keyInput.value.trim() : '';
+    const statusEl = document.getElementById('keyStatus');
     if (!apiKey) { alert('Please enter your Gemini API key'); return; }
-    const res = await fetch('/api/settings/gemini-key', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiKey })
-    });
-    if (res.ok) {
+
+    if (statusEl) {
+      statusEl.textContent = '⏳ Validating…';
+      statusEl.className = 'key-status key-status-pending';
+    }
+
+    try {
+      const res = await fetch('/api/settings/gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey })
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // 400 = invalid key
+        if (statusEl) {
+          statusEl.textContent = '❌ ' + (data.message || 'Invalid API key — not saved');
+          statusEl.className = 'key-status key-status-error';
+        }
+        return;
+      }
+
       keyInput.value = '';
-      const statusEl = document.getElementById('keyStatus');
-      if (statusEl) statusEl.textContent = '✓ Configured';
-      alert('Gemini API key saved securely!');
-    } else {
-      alert('Failed to save key');
+      const status = data.status || 'SAVED';
+      if (statusEl) {
+        if (status === 'VERIFIED') {
+          statusEl.textContent = '✓ ' + data.message;
+          statusEl.className = 'key-status key-status-ok';
+        } else if (status === 'RATE_LIMITED') {
+          statusEl.textContent = '⚠ ' + data.message;
+          statusEl.className = 'key-status key-status-warn';
+        } else {
+          statusEl.textContent = '✓ ' + data.message;
+          statusEl.className = 'key-status key-status-ok';
+        }
+      }
+    } catch (e) {
+      if (statusEl) {
+        statusEl.textContent = '✗ Failed to save key';
+        statusEl.className = 'key-status key-status-error';
+      }
     }
   }
 

@@ -106,6 +106,62 @@ public class CoverLetterController {
         return ResponseEntity.ok(letters);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CoverLetter> getOne(@PathVariable String id, Authentication authentication) {
+        String userId = getUserId(authentication);
+        CoverLetter cl = coverLetterRepository.findById(userId, id);
+        if (cl == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(cl);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id, Authentication authentication) {
+        String userId = getUserId(authentication);
+        CoverLetter cl = coverLetterRepository.findById(userId, id);
+        if (cl == null) return ResponseEntity.notFound().build();
+        // Clean up stored files
+        if (cl.getGcsPdfPath() != null) try { gcsService.delete(cl.getGcsPdfPath()); } catch (Exception ignored) {}
+        if (cl.getGcsDocxPath() != null) try { gcsService.delete(cl.getGcsDocxPath()); } catch (Exception ignored) {}
+        coverLetterRepository.delete(userId, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/write")
+    public ResponseEntity<?> write(@RequestBody Map<String, String> req, Authentication authentication) throws IOException {
+        String userId = getUserId(authentication);
+        String content = req.get("content");
+        if (content == null || content.isBlank()) return ResponseEntity.badRequest().body("content required");
+        String jobId = req.get("jobId");
+        String resumeId = req.get("resumeId");
+
+        TailoredResume wrapper = new TailoredResume();
+        wrapper.setId(UUID.randomUUID().toString());
+        ResumeSection sec = new ResumeSection();
+        sec.setName("COVER LETTER");
+        sec.setOriginalContent(content);
+        sec.setModifiedContent(content);
+        sec.setWasModified(false);
+        wrapper.setModifiedSections(List.of(sec));
+
+        byte[] pdfBytes = builderService.generatePdf(wrapper);
+        byte[] docxBytes = builderService.generateDocx(wrapper);
+
+        String pdfPath = userId + "/cover-letters/" + wrapper.getId() + ".pdf";
+        String docxPath = userId + "/cover-letters/" + wrapper.getId() + ".docx";
+        gcsService.upload(pdfBytes, pdfPath, "application/pdf");
+        gcsService.upload(docxBytes, docxPath, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+
+        CoverLetter cl = new CoverLetter();
+        cl.setUserId(userId);
+        cl.setJobId(jobId);
+        cl.setResumeId(resumeId);
+        cl.setContent(content);
+        cl.setGcsPdfPath(pdfPath);
+        cl.setGcsDocxPath(docxPath);
+        coverLetterRepository.save(userId, cl);
+        return ResponseEntity.ok(cl);
+    }
+
     private String getUserId(Authentication auth) {
         return ((OAuth2AuthenticationToken) auth).getPrincipal().getAttributes().get("sub").toString();
     }

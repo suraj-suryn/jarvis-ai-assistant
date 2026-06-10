@@ -140,13 +140,35 @@ const Admin = {
       const data = await res.json();
       const list = document.getElementById('adminUserList');
       if (!list) return;
-      list.innerHTML = '<h4 style="color:var(--text-muted);margin-bottom:.5rem">Allowed Emails</h4>'
-        + (data.allowedEmails || []).map(e => `
+
+      // Section 1: Registered users (have logged in at least once)
+      const users = data.users || [];
+      const allowedEmails = data.allowedEmails || [];
+      const registeredHtml = users.length === 0 ? '<p style="color:var(--text-muted);font-size:.85rem">No registered users yet.</p>'
+        : users.map(u => `
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem;padding:.5rem;background:rgba(0,212,255,.04);border-radius:6px">
+            ${u.pictureUrl ? `<img src="${App.esc(u.pictureUrl)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/>` : '<div style="width:32px;height:32px;border-radius:50%;background:#1a2d42;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#5a7a9a">👤</div>'}
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.88rem;color:#c8d8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${App.esc(u.displayName || u.email)}</div>
+              <div style="font-size:.77rem;color:#5a7a9a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${App.esc(u.email)}</div>
+            </div>
+            <button class="btn-danger" style="padding:.25rem .6rem;font-size:.75rem;flex-shrink:0" onclick="Admin.remove('${App.esc(u.email)}')">Revoke</button>
+          </div>`).join('');
+
+      // Section 2: Allowlisted emails (not yet logged in)
+      const allowlistOnly = allowedEmails.filter(e => !users.some(u => u.email === e));
+      const allowlistHtml = allowlistOnly.length === 0 ? ''
+        : allowlistOnly.map(e => `
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
-            <span>${App.esc(e)}</span>
-            <button class="btn-danger" style="padding:.2rem .5rem;font-size:.78rem" onclick="Admin.remove('${App.esc(e)}')">Remove</button>
-          </div>
-        `).join('');
+            <div style="width:32px;height:32px;border-radius:50%;background:#1a2d42;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#5a7a9a;flex-shrink:0">✉</div>
+            <span style="font-size:.86rem;color:#8aa0b8;flex:1">${App.esc(e)}</span>
+            <button class="btn-danger" style="padding:.25rem .6rem;font-size:.75rem" onclick="Admin.remove('${App.esc(e)}')">Remove</button>
+          </div>`).join('');
+
+      list.innerHTML = `
+        <h4 style="color:var(--text-muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;margin:0 0 .6rem">Registered Users (${users.length})</h4>
+        ${registeredHtml}
+        ${allowlistOnly.length > 0 ? `<h4 style="color:var(--text-muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;margin:1rem 0 .6rem">Pending (invited, not yet logged in)</h4>${allowlistHtml}` : ''}`;
     } catch (e) { console.error(e); }
   },
   async addUser() {
@@ -157,7 +179,7 @@ const Admin = {
     Admin.load();
   },
   async remove(email) {
-    if (!confirm('Remove ' + email + '?')) return;
+    if (!confirm('Revoke access for ' + email + '?')) return;
     await fetch('/api/admin/users/' + encodeURIComponent(email), { method: 'DELETE' });
     Admin.load();
   }
@@ -173,11 +195,18 @@ const Company = {
     const result = document.getElementById('companyResult');
     progress.classList.remove('hidden');
     result.classList.add('hidden');
+    if (window.MusicPlayer) MusicPlayer.start();
     try {
       const params = new URLSearchParams({ company });
       if (jobTitle) params.append('jobTitle', jobTitle);
       const res = await fetch('/api/company/research?' + params);
-      if (!res.ok) { alert(await res.text()); return; }
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 402) alert('⚠ Gemini key not configured. Go to Settings → Gemini API Key to add one.');
+        else if (res.status === 429) alert('⚠ Rate limited — please wait a minute and try again.');
+        else alert(text);
+        return;
+      }
       const data = await res.json();
       document.getElementById('companyName').textContent = data.companyName;
       document.getElementById('companyOverview').textContent = data.overview;
@@ -193,6 +222,7 @@ const Company = {
       alert('Research failed: ' + e.message);
     } finally {
       progress.classList.add('hidden');
+      if (window.MusicPlayer) MusicPlayer.stop();
     }
   }
 };

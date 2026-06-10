@@ -3,6 +3,7 @@ package com.jarus.ai.controller;
 import com.jarus.ai.model.UserSettings;
 import com.jarus.ai.repository.UserRepository;
 import com.jarus.ai.security.EncryptionService;
+import com.jarus.ai.service.GeminiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,17 +19,43 @@ public class SettingsController {
 
     @Autowired private UserRepository userRepository;
     @Autowired private EncryptionService encryptionService;
+    @Autowired private GeminiService geminiService;
 
     @PostMapping("/gemini-key")
-    public ResponseEntity<Void> saveGeminiKey(@RequestBody Map<String, String> req,
+    public ResponseEntity<Map<String, String>> saveGeminiKey(@RequestBody Map<String, String> req,
                                                Authentication authentication) {
         String userId = getUserId(authentication);
         String rawKey = req.get("apiKey");
         if (rawKey == null || rawKey.isBlank()) return ResponseEntity.badRequest().build();
+
+        // Verify the key with a test call before saving
+        String verifyResult = geminiService.verifyKey(rawKey);
+        if ("INVALID_KEY".equals(verifyResult)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "INVALID_KEY",
+                "message", "API key was rejected by Gemini (401/403). Key not saved."
+            ));
+        }
+
+        // Save for all valid/unknown results
         UserSettings settings = userRepository.getSettings(userId);
         settings.setEncryptedGeminiKey(encryptionService.encrypt(rawKey));
         userRepository.saveSettings(userId, settings);
-        return ResponseEntity.ok().build();
+
+        return switch (verifyResult) {
+            case "VERIFIED" -> ResponseEntity.ok(Map.of(
+                "status", "VERIFIED",
+                "message", "Key verified with Gemini and saved securely."
+            ));
+            case "RATE_LIMITED" -> ResponseEntity.ok(Map.of(
+                "status", "RATE_LIMITED",
+                "message", "Key is valid but currently rate limited — saved securely."
+            ));
+            default -> ResponseEntity.ok(Map.of(
+                "status", "SAVED",
+                "message", "Key saved (could not verify connectivity right now)."
+            ));
+        };
     }
 
     @GetMapping("/gemini-key/status")

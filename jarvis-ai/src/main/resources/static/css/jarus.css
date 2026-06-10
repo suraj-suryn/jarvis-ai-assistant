@@ -213,7 +213,11 @@ label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bott
 .tips-box { background: rgba(0,212,255,0.06); border-left: 3px solid var(--accent); padding: 0.75rem; margin-top: 0.75rem; border-radius: 0 5px 5px 0; }
 
 /* -------- SETTINGS -------- */
-.key-status { font-size: 0.85rem; color: var(--success); margin-left: 0.5rem; }
+.key-status { font-size: 0.85rem; margin-left: 0.5rem; transition: color .3s; }
+.key-status-ok      { color: var(--success); }
+.key-status-warn    { color: var(--warning); }
+.key-status-error   { color: var(--danger); }
+.key-status-pending { color: var(--text-muted); }
 .danger-zone { border-color: rgba(255,82,82,0.3); }
 
 /* -------- BOOKMARKLET -------- */
@@ -225,3 +229,48 @@ label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bott
 
 /* -------- MISC -------- */
 .job-list .job-card { margin-bottom: 0.5rem; }
+
+/* -------- MUSIC WIDGET -------- */
+.music-widget {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  background: rgba(13, 27, 42, 0.92);
+  border: 1px solid var(--accent-border);
+  border-radius: 24px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.music-widget.hidden { display: none; }
+.music-label { font-size: 1rem; }
+.music-widget select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-family: var(--font);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  max-width: 100px;
+}
+.music-widget select option { background: var(--bg-card); }
+.music-widget button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  opacity: 0.85;
+  transition: opacity .2s;
+}
+.music-widget button:hover { opacity: 1; }
