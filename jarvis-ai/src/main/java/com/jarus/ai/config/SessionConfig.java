@@ -1,9 +1,9 @@
 package com.jarus.ai.config;
 
-import org.springframework.context.annotation.Bean;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
-import org.springframework.session.jdbc.config.annotation.SpringSessionDataSource;
 
 /**
  * Fixes DuplicateKeyException in Spring Session JDBC on PostgreSQL.
@@ -16,10 +16,12 @@ import org.springframework.session.jdbc.config.annotation.SpringSessionDataSourc
 @Configuration
 public class SessionConfig {
 
-    @Bean
-    public org.springframework.session.SessionRepositoryCustomizer<JdbcIndexedSessionRepository>
-    upsertSessionAttributes() {
-        return repository -> repository.setCreateSessionAttributeQuery(
+    @Autowired
+    private JdbcIndexedSessionRepository sessionRepository;
+
+    @PostConstruct
+    public void configureUpsert() {
+        sessionRepository.setCreateSessionAttributeQuery(
             "INSERT INTO SPRING_SESSION_ATTRIBUTES " +
             "(SESSION_PRIMARY_ID, ATTRIBUTE_NAME, ATTRIBUTE_BYTES) " +
             "VALUES (?, ?, ?) " +
