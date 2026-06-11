@@ -14,9 +14,17 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class GeminiService {
+
+    // 30-minute in-memory cache — avoids redundant Gemini calls and free-tier 429s
+    private static final long CACHE_TTL_MS = 30 * 60 * 1000L;
+    private record CachedResponse(String response, long timestamp) {
+        boolean isValid() { return System.currentTimeMillis() - timestamp < CACHE_TTL_MS; }
+    }
+    private final ConcurrentHashMap<Integer, CachedResponse> responseCache = new ConcurrentHashMap<>();
 
     @Autowired
     @Qualifier("geminiWebClient")
@@ -99,6 +107,11 @@ public class GeminiService {
     }
 
     private String callGemini(String prompt, String apiKey) {
+        // Check cache first (keyed by prompt content — same prompt → same answer)
+        int cacheKey = prompt.hashCode();
+        CachedResponse cached = responseCache.get(cacheKey);
+        if (cached != null && cached.isValid()) return cached.response();
+
         ObjectNode requestBody = objectMapper.createObjectNode();
         ArrayNode contents = requestBody.putArray("contents");
         ObjectNode content = contents.addObject();
@@ -127,9 +140,12 @@ public class GeminiService {
 
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            return root.path("candidates").get(0)
+            String result = root.path("candidates").get(0)
                     .path("content").path("parts").get(0)
                     .path("text").asText();
+            // Store in cache for 30 mins
+            responseCache.put(cacheKey, new CachedResponse(result, System.currentTimeMillis()));
+            return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse Gemini response: " + responseBody, e);
         }

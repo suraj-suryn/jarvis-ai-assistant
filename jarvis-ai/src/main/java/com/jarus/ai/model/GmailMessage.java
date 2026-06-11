@@ -7,6 +7,7 @@ public class GmailMessage {
     private String subject;
     private String snippet;
     private String body;
+    private boolean html; // true when body contains HTML
     private String tag; // RECRUITER, APPLIED, INTERVIEW, REJECTION, OTHER
     private long receivedAt;
 
@@ -24,6 +25,8 @@ public class GmailMessage {
     public void setSnippet(String snippet) { this.snippet = snippet; }
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
+    public boolean isHtml() { return html; }
+    public void setHtml(boolean html) { this.html = html; }
     public String getTag() { return tag; }
     public void setTag(String tag) { this.tag = tag; }
     public long getReceivedAt() { return receivedAt; }

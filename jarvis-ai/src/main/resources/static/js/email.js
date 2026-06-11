@@ -46,12 +46,31 @@ const Email = (() => {
       const res = await fetch('/api/email/thread/' + threadId);
       if (!res.ok) { messagesEl.innerHTML = '<p style="color:var(--danger)">Failed to load thread.</p>'; return; }
       const msgs = await res.json();
-      messagesEl.innerHTML = msgs.map(m => `
+      // Render container divs first, then populate bodies safely
+      messagesEl.innerHTML = msgs.map((m, i) => `
         <div style="margin-bottom:1rem;padding:.75rem;background:var(--bg);border-radius:5px;border:1px solid var(--accent-border)">
           <div style="font-size:.8rem;color:var(--text-muted)">${App.esc(m.from || '')} &middot; ${m.receivedAt ? new Date(m.receivedAt).toLocaleString() : ''}</div>
-          <div style="margin-top:.5rem;font-size:.88rem;white-space:pre-wrap">${App.esc((m.body || m.snippet || '').substring(0, 1500))}</div>
+          <div id="msgbody-${i}" style="margin-top:.5rem"></div>
         </div>
       `).join('');
+      // Populate each message body — iframe for HTML, textContent for plain
+      msgs.forEach((m, i) => {
+        const el = document.getElementById('msgbody-' + i);
+        if (!el) return;
+        if (m.html) {
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+          iframe.style.cssText = 'width:100%;min-height:350px;border:none;background:white;border-radius:4px;display:block';
+          iframe.srcdoc = m.body || '';
+          iframe.onload = () => {
+            try { iframe.style.height = Math.max(350, iframe.contentWindow.document.body.scrollHeight + 30) + 'px'; } catch(e) {}
+          };
+          el.appendChild(iframe);
+        } else {
+          el.style.cssText = 'font-size:.88rem;white-space:pre-wrap';
+          el.textContent = (m.body || m.snippet || '').substring(0, 3000);
+        }
+      });
     } catch (e) {
       messagesEl.innerHTML = '<p style="color:var(--danger)">Error: ' + e.message + '</p>';
     }

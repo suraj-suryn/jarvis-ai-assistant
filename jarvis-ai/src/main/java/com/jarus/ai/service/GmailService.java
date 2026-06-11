@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -108,12 +109,33 @@ public class GmailService {
             }
         }
 
-        // Extract body
-        gm.setBody(extractBody(msg.getPayload()));
+        // Extract body — prefer HTML, fall back to plain text
+        String htmlBody = extractByMimeType(msg.getPayload(), "text/html");
+        if (!htmlBody.isEmpty()) {
+            gm.setBody(htmlBody);
+            gm.setHtml(true);
+        } else {
+            gm.setBody(extractByMimeType(msg.getPayload(), "text/plain"));
+            gm.setHtml(false);
+        }
 
         // Auto-tag
         gm.setTag(detectTag(gm.getSubject(), gm.getSnippet()));
         return gm;
+    }
+
+    private String extractByMimeType(MessagePart part, String mimeType) {
+        if (part == null) return "";
+        if (mimeType.equals(part.getMimeType()) && part.getBody() != null && part.getBody().getData() != null) {
+            return new String(Base64.getUrlDecoder().decode(part.getBody().getData()), StandardCharsets.UTF_8);
+        }
+        if (part.getParts() != null) {
+            for (MessagePart subPart : part.getParts()) {
+                String body = extractByMimeType(subPart, mimeType);
+                if (!body.isEmpty()) return body;
+            }
+        }
+        return "";
     }
 
     private String extractBody(MessagePart part) {
