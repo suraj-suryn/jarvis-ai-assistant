@@ -108,13 +108,21 @@ public class GeminiService {
         genConfig.put("temperature", 0.7);
         genConfig.put("maxOutputTokens", 4096);
 
-        String responseBody = geminiWebClient.post()
-                .uri("/v1beta/models/{model}:generateContent?key={key}", geminiModel, apiKey)
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        String responseBody;
+        try {
+            responseBody = geminiWebClient.post()
+                    .uri("/v1beta/models/{model}:generateContent?key={key}", geminiModel, apiKey)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            if (e.getStatusCode().value() == 429) {
+                throw new com.jarus.ai.exception.GeminiRateLimitException("Gemini rate limit exceeded — wait a minute and retry");
+            }
+            throw new RuntimeException("Gemini API error " + e.getStatusCode() + ": " + e.getResponseBodyAsString(), e);
+        }
 
         try {
             JsonNode root = objectMapper.readTree(responseBody);

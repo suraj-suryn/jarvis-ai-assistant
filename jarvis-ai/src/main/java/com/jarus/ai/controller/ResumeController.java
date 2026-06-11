@@ -63,7 +63,12 @@ public class ResumeController {
         String apiKey = getDecryptedGeminiKey(settings);
         if (apiKey == null) return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body("Gemini API key not configured");
 
-        TailoredResume tailored = geminiService.tailorResume(resume, job, apiKey);
+        TailoredResume tailored;
+        try {
+            tailored = geminiService.tailorResume(resume, job, apiKey);
+        } catch (com.jarus.ai.exception.GeminiRateLimitException e) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
+        }
         tailored.setUserId(userId);
 
         // Generate files and store in GCS

@@ -47,7 +47,12 @@ public class CoverLetterController {
         try { apiKey = encryptionService.decrypt(settings.getEncryptedGeminiKey()); }
         catch (Exception e) { return ResponseEntity.status(500).body("Failed to retrieve API key"); }
 
-        String content = geminiService.generateCoverLetter(resume, job, apiKey);
+        String content;
+        try {
+            content = geminiService.generateCoverLetter(resume, job, apiKey);
+        } catch (com.jarus.ai.exception.GeminiRateLimitException e) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
+        }
 
         // Build a minimal TailoredResume wrapper to reuse ResumeBuilderService for PDF/DOCX
         TailoredResume wrapper = new TailoredResume();
