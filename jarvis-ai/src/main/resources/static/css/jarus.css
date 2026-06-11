@@ -137,6 +137,34 @@ label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bott
 .alert { padding: 0.75rem 1rem; border-radius: 5px; background: var(--accent-glow); border: 1px solid var(--accent-border); margin-top: 1rem; }
 .hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
 
+/* Scan result toast */
+.scan-toast {
+  padding: 0.7rem 1rem; border-radius: 6px; margin-bottom: 1rem;
+  font-size: 0.9rem; border: 1px solid var(--accent-border); background: var(--bg-card);
+  transition: opacity 0.3s;
+}
+.scan-toast.toast-ok   { border-color: var(--success); background: rgba(0,230,118,0.08); color: var(--success); }
+.scan-toast.toast-warn { border-color: var(--warning); background: rgba(255,171,0,0.08); color: var(--warning); }
+.scan-toast.toast-error{ border-color: var(--danger);  background: rgba(255,82,82,0.08);  color: var(--danger);  }
+
+/* New-user onboarding banner */
+.setup-banner {
+  padding: 0.85rem 1.1rem; border-radius: 7px; margin-bottom: 1rem;
+  background: rgba(255,171,0,0.1); border: 1px solid var(--warning);
+  color: var(--text); font-size: 0.9rem; line-height: 1.5;
+}
+.setup-banner a { color: var(--warning); font-weight: 600; }
+.setup-banner a:hover { text-decoration: underline; }
+
+/* Settings required field indicator */
+.setup-required {
+  font-size: 0.75rem; color: var(--warning); margin-left: 0.5rem; font-weight: 600;
+}
+
+/* Skill badges inside job detail panel */
+.badge-skill      { background: rgba(0,230,118,0.12); color: var(--success); margin: 2px; }
+.badge-skill-miss { background: rgba(255,171,0,0.12); color: var(--warning); margin: 2px; }
+
 /* -------- DROPZONE -------- */
 .dropzone {
   border: 2px dashed var(--accent-border); border-radius: 8px;

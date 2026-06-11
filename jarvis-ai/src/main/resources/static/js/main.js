@@ -65,20 +65,33 @@ const App = (() => {
 
   async function loadDashboardStats() {
     try {
-      const res = await fetch('/api/jobs');
-      if (!res.ok) return;
-      const jobs = await res.json();
+      // Load settings first to check if keywords are configured
+      const [jobsRes, settingsRes] = await Promise.all([fetch('/api/jobs'), fetch('/api/settings')]);
+      if (!jobsRes.ok) return;
+      const jobs = await jobsRes.json();
+      const settings = settingsRes.ok ? await settingsRes.json() : {};
+
+      // Show/hide onboarding banner
+      const banner = document.getElementById('setupBanner');
+      if (banner) {
+        if (!settings.jobKeywords || settings.jobKeywords.trim() === '') {
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
       document.getElementById('numTotal').textContent = jobs.length;
       document.getElementById('numNew').textContent = jobs.filter(j => j.newToday).length;
       document.getElementById('numApplied').textContent = jobs.filter(j => j.status === 'APPLIED').length;
       document.getElementById('numInterview').textContent = jobs.filter(j => j.status === 'INTERVIEW').length;
 
-      // Recent 5 jobs
+      // Recent 5 jobs — store full list for detail panel
+      App._allJobs = jobs;
       const recentList = document.getElementById('recentJobsList');
       if (recentList) {
         const recent = jobs.slice(0, 5);
         recentList.innerHTML = recent.map(j => `
-          <div class="job-card">
+          <div class="job-card" style="cursor:pointer" onclick="App.openJobDetail('${esc(j.id)}')">
             <div class="job-card-body">
               <div class="job-title">${esc(j.title)}</div>
               <div class="job-company">${esc(j.company)} &middot; <span class="badge badge-status">${j.status}</span></div>
@@ -94,15 +107,78 @@ const App = (() => {
 
   async function scanJobs() {
     const el = document.getElementById('scanResult');
-    if (el) { el.classList.remove('hidden'); el.textContent = 'Scanning…'; }
+    function showToast(msg, type) {
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden', 'toast-error', 'toast-ok', 'toast-warn');
+      el.classList.add('toast-' + (type || 'ok'));
+      clearTimeout(el._hideTimer);
+      el._hideTimer = setTimeout(() => el.classList.add('hidden'), 7000);
+    }
+
+    // Check if keywords are configured before scanning
+    try {
+      const settingsRes = await fetch('/api/settings');
+      const settings = settingsRes.ok ? await settingsRes.json() : {};
+      if (!settings.jobKeywords || settings.jobKeywords.trim() === '') {
+        showToast('⚙️ No job keywords set — opening Settings so you can configure them first!', 'warn');
+        setTimeout(() => switchTab('settings'), 1500);
+        // Highlight the keywords field in settings
+        setTimeout(() => {
+          const kwEl = document.getElementById('jobKeywords');
+          const req = document.getElementById('kwRequired');
+          if (kwEl) { kwEl.focus(); kwEl.style.borderColor = 'var(--warning)'; }
+          if (req) req.classList.remove('hidden');
+        }, 1600);
+        return;
+      }
+    } catch (e) { /* proceed anyway */ }
+
+    showToast('⏳ Scanning for new jobs…', 'ok');
     try {
       const res = await fetch('/api/jobs/scan', { method: 'POST' });
       const data = await res.json();
-      if (el) el.textContent = data.message + ' (' + data.count + ' jobs)';
-      loadDashboardStats();
+      const msg = data.count > 0
+        ? `✅ Found ${data.count} new job${data.count > 1 ? 's' : ''}! Refreshing…`
+        : `ℹ️ Scan complete — no new jobs this time. Try updating your keywords in Settings.`;
+      showToast(msg, data.count > 0 ? 'ok' : 'warn');
+      if (data.count > 0) loadDashboardStats();
     } catch (e) {
-      if (el) el.textContent = 'Scan failed: ' + e.message;
+      showToast('❌ Scan failed: ' + e.message, 'error');
     }
+  }
+
+  function openJobDetail(jobId) {
+    const job = (App._allJobs || []).find(j => j.id === jobId);
+    if (!job) return;
+    const panel = document.getElementById('jobDetailPanel');
+    if (!panel) return;
+    document.getElementById('jdTitle').textContent = job.title || '';
+    document.getElementById('jdMeta').innerHTML =
+      `<strong>${esc(job.company || '')}</strong> &nbsp;·&nbsp; ${esc(job.location || 'Remote')} &nbsp;·&nbsp; <span class="badge badge-status">${job.status}</span>` +
+      (job.matchScore ? ` &nbsp;·&nbsp; ${scoreBadge(job.matchScore)}` : '');
+    const skillsEl = document.getElementById('jdSkills');
+    let skillsHtml = '';
+    if (job.matchedSkills && job.matchedSkills.length) {
+      skillsHtml += '<div style="margin-bottom:.4rem"><span style="color:var(--success)">✔ Matched:</span> ' +
+        job.matchedSkills.map(s => `<span class="badge badge-skill">${esc(s)}</span>`).join(' ') + '</div>';
+    }
+    if (job.missingSkills && job.missingSkills.length) {
+      skillsHtml += '<div><span style="color:var(--warning)">⚠ Missing:</span> ' +
+        job.missingSkills.map(s => `<span class="badge badge-skill-miss">${esc(s)}</span>`).join(' ') + '</div>';
+    }
+    skillsEl.innerHTML = skillsHtml;
+    const raw = (job.description || '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, '\n').trim();
+    document.getElementById('jdDesc').textContent = raw.substring(0, 3000);
+    const link = document.getElementById('jdLink');
+    if (job.url) { link.href = job.url; link.style.display = 'inline-block'; }
+    else { link.style.display = 'none'; }
+    panel.classList.remove('hidden');
+  }
+
+  function closeJobDetail() {
+    const panel = document.getElementById('jobDetailPanel');
+    if (panel) panel.classList.add('hidden');
   }
 
   function greet() {
@@ -126,7 +202,7 @@ const App = (() => {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  return { init, switchTab, scanJobs, scoreBadge, esc };
+  return { init, switchTab, scanJobs, scoreBadge, esc, openJobDetail, closeJobDetail };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);

@@ -48,11 +48,24 @@
         <button class="btn-secondary" onclick="App.switchTab('resume')">📄 Tailor Resume</button>
         <button class="btn-secondary" onclick="App.switchTab('pipeline')">📋 View Pipeline</button>
       </div>
+      <div id="scanResult" class="scan-toast hidden"></div>
+      <!-- Onboarding banner: shown only when user has no keywords configured -->
+      <div id="setupBanner" class="setup-banner hidden">
+        👋 <strong>Welcome to JARUS!</strong> Before scanning for jobs, <a href="#" onclick="App.switchTab('settings');return false;">set your job keywords and location in Settings</a> so we know what to look for.
+      </div>
       <div id="recentJobs" class="card">
         <h3>Recent Captures</h3>
         <div id="recentJobsList" class="job-list"></div>
       </div>
-      <div id="scanResult" class="alert hidden"></div>
+      <!-- Job detail side panel -->
+      <div id="jobDetailPanel" class="side-panel hidden">
+        <button class="close-btn" onclick="App.closeJobDetail()">✕</button>
+        <h3 id="jdTitle" style="margin-bottom:.25rem"></h3>
+        <div id="jdMeta" style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem"></div>
+        <div id="jdSkills" style="margin-bottom:.75rem"></div>
+        <div id="jdDesc" style="font-size:.88rem;line-height:1.6;white-space:pre-wrap;max-height:55vh;overflow-y:auto"></div>
+        <a id="jdLink" href="#" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block;margin-top:1rem">🔗 Open Job Post</a>
+      </div>
     </section>
 
     <!-- RESUME TAB -->
@@ -215,10 +228,11 @@
           </div>
           <div class="card">
             <h3>Job Search Preferences</h3>
-            <label>Keywords</label>
-            <input type="text" id="jobKeywords" class="text-input" placeholder="Java developer, Spring Boot…"/>
-            <label>Location</label>
-            <input type="text" id="jobLocation" class="text-input" placeholder="Remote, Bangalore, etc."/>
+            <p class="hint">Tell JARUS what roles and where to search — e.g. <em>"Python developer, AWS"</em> or <em>"UX Designer, Mumbai"</em>.</p>
+            <label>Job Keywords <span id="kwRequired" class="setup-required hidden">⚠ Required for scanning</span></label>
+            <input type="text" id="jobKeywords" class="text-input" placeholder="e.g. Software Engineer, React, Node.js…"/>
+            <label>Location <span class="hint">(city, country, or "Remote")</span></label>
+            <input type="text" id="jobLocation" class="text-input" placeholder="e.g. Remote, Mumbai, New York…"/>
             <label>Daily Scan Hour (0-23)</label>
             <input type="number" id="scanHour" class="text-input" min="0" max="23" value="8"/>
             <button class="btn-primary" onclick="Settings.save()">Save Preferences</button>

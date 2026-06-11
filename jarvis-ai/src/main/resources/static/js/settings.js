@@ -89,13 +89,32 @@ const Settings = (() => {
     const keywords = document.getElementById('jobKeywords').value.trim();
     const location = document.getElementById('jobLocation').value.trim();
     const scanTimeHour = parseInt(document.getElementById('scanHour').value, 10);
+
+    if (!keywords) {
+      const kwEl = document.getElementById('jobKeywords');
+      const req = document.getElementById('kwRequired');
+      if (kwEl) { kwEl.focus(); kwEl.style.borderColor = 'var(--warning)'; }
+      if (req) req.classList.remove('hidden');
+      alert('Please enter at least one job keyword (e.g. "Software Engineer, React")');
+      return;
+    }
+
+    // Clear any warning highlight
+    const kwEl = document.getElementById('jobKeywords');
+    const req = document.getElementById('kwRequired');
+    if (kwEl) kwEl.style.borderColor = '';
+    if (req) req.classList.add('hidden');
+
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobKeywords: keywords, location, scanTimeHour })
     });
-    if (res.ok) alert('Preferences saved!');
-    else alert('Failed to save preferences');
+    if (res.ok) {
+      alert('Preferences saved! You can now scan for jobs from the Dashboard.');
+    } else {
+      alert('Failed to save preferences');
+    }
   }
 
   async function subscribePush() {
