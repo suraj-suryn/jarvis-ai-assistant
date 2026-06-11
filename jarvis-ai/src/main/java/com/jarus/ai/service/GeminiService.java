@@ -40,9 +40,10 @@ public class GeminiService {
         try {
             callGemini("Say OK", apiKey);
             return "VERIFIED";
+        } catch (com.jarus.ai.exception.GeminiRateLimitException e) {
+            return "RATE_LIMITED";
         } catch (WebClientResponseException e) {
             int status = e.getStatusCode().value();
-            if (status == 429) return "RATE_LIMITED";
             if (status == 400 || status == 401 || status == 403) return "INVALID_KEY";
             return "NETWORK_ERROR";
         } catch (Exception e) {

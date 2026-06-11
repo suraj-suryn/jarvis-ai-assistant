@@ -81,10 +81,7 @@ const Jobs = (() => {
 
   function tailor(jobId) {
     App.switchTab('resume');
-    setTimeout(() => {
-      const sel = document.getElementById('tailorJobSelect');
-      if (sel) sel.value = jobId;
-    }, 300);
+    setTimeout(() => Resume.prefillJob(jobId), 100);
   }
 
   function research(company, jobTitle) {

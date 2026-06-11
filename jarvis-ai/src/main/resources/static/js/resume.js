@@ -4,6 +4,7 @@
 const Resume = (() => {
   let resumes = [];
   let currentTailoredId = null;
+  let pendingJobId = null;
 
   function init() {
     setupDropzone();
@@ -89,6 +90,7 @@ const Resume = (() => {
       if (!sel) return;
       sel.innerHTML = '<option value="">Select job…</option>'
         + jobs.map(j => `<option value="${j.id}">${App.esc(j.title)} — ${App.esc(j.company)}</option>`).join('');
+      if (pendingJobId) { sel.value = pendingJobId; pendingJobId = null; }
     } catch (e) { console.error(e); }
   }
 
@@ -389,5 +391,14 @@ const Resume = (() => {
     };
   }
 
-  return { init, tailor, download, loadCoverLetters, viewCoverLetter, deleteCoverLetter, writeCoverLetter, genCoverFromTailor, delete: deleteResume };
+  function prefillJob(jobId) {
+    const sel = document.getElementById('tailorJobSelect');
+    if (sel && sel.options.length > 1) {
+      sel.value = jobId;
+    } else {
+      pendingJobId = jobId;
+    }
+  }
+
+  return { init, tailor, download, loadCoverLetters, viewCoverLetter, deleteCoverLetter, writeCoverLetter, genCoverFromTailor, prefillJob, delete: deleteResume };
 })();

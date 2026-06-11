@@ -51,7 +51,12 @@ public class CompanyController {
             }
         }
 
-        CompanyResearch result = researchService.research(company, resolvedTitle, jd, apiKey);
+        CompanyResearch result;
+        try {
+            result = researchService.research(company, resolvedTitle, jd, apiKey);
+        } catch (com.jarus.ai.exception.GeminiRateLimitException e) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
+        }
         return ResponseEntity.ok(result);
     }
 
