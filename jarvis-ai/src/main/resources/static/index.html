@@ -233,9 +233,36 @@
             <input type="text" id="jobKeywords" class="text-input" placeholder="e.g. Software Engineer, React, Node.js…"/>
             <label>Location <span class="hint">(city, country, or "Remote")</span></label>
             <input type="text" id="jobLocation" class="text-input" placeholder="e.g. Remote, Mumbai, New York…"/>
-            <label>Daily Scan Hour (0-23)</label>
+            <div class="prefs-row">
+              <div class="prefs-col">
+                <label>Job Type</label>
+                <select id="jobType" class="select-input">
+                  <option value="ANY">Any</option>
+                  <option value="REMOTE">Remote only</option>
+                  <option value="HYBRID">Hybrid only</option>
+                  <option value="ONSITE">On-site only</option>
+                </select>
+              </div>
+              <div class="prefs-col">
+                <label>Experience Level</label>
+                <select id="experienceLevel" class="select-input">
+                  <option value="ANY">Any level</option>
+                  <option value="ENTRY">Entry / Fresher (0-2 yrs)</option>
+                  <option value="MID">Mid-level (2-5 yrs)</option>
+                  <option value="SENIOR">Senior (5+ yrs)</option>
+                  <option value="LEAD">Lead / Principal / Manager</option>
+                </select>
+              </div>
+            </div>
+            <label style="margin-top:.75rem;display:block">Daily Scan Hour (0-23)</label>
             <input type="number" id="scanHour" class="text-input" min="0" max="23" value="8"/>
             <button class="btn-primary" onclick="Settings.save()">Save Preferences</button>
+          </div>
+          <div class="card">
+            <h3>Job Sources</h3>
+            <p class="hint">Choose which sources JARUS scans. Uncheck to exclude a source.</p>
+            <div id="sourcesChecklist" class="sources-list"></div>
+            <p id="sourcesNote" class="hint" style="margin-top:.5rem"></p>
           </div>
         </div>
         <div class="col">

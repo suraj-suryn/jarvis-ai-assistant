@@ -26,6 +26,14 @@ public class UserSettings {
     @Column(name = "enabled_sources", length = 1000)
     private List<String> enabledSources = new ArrayList<>();
 
+    // ANY, REMOTE, HYBRID, ONSITE
+    @Column(length = 50)
+    private String jobType = "ANY";
+
+    // ANY, ENTRY, MID, SENIOR, LEAD
+    @Column(length = 50)
+    private String experienceLevel = "ANY";
+
     private int scanTimeHour = 8;
 
     @Column(length = 2000)
@@ -48,6 +56,10 @@ public class UserSettings {
     public void setLocation(String location) { this.location = location; }
     public List<String> getEnabledSources() { return enabledSources; }
     public void setEnabledSources(List<String> enabledSources) { this.enabledSources = enabledSources; }
+    public String getJobType() { return jobType; }
+    public void setJobType(String jobType) { this.jobType = jobType; }
+    public String getExperienceLevel() { return experienceLevel; }
+    public void setExperienceLevel(String experienceLevel) { this.experienceLevel = experienceLevel; }
     public int getScanTimeHour() { return scanTimeHour; }
     public void setScanTimeHour(int scanTimeHour) { this.scanTimeHour = scanTimeHour; }
     public String getGmailAccessToken() { return gmailAccessToken; }

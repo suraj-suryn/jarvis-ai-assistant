@@ -44,6 +44,10 @@ public class JobPost {
     private long appliedAt;
     private long interviewDate;
 
+    // REMOTE / HYBRID / ONSITE — populated by aggregator sources
+    @Column(length = 20)
+    private String workType;
+
     public JobPost() {
         this.status = "NEW";
         this.capturedAt = System.currentTimeMillis();
@@ -81,4 +85,6 @@ public class JobPost {
     public void setAppliedAt(long appliedAt) { this.appliedAt = appliedAt; }
     public long getInterviewDate() { return interviewDate; }
     public void setInterviewDate(long interviewDate) { this.interviewDate = interviewDate; }
+    public String getWorkType() { return workType; }
+    public void setWorkType(String workType) { this.workType = workType; }
 }

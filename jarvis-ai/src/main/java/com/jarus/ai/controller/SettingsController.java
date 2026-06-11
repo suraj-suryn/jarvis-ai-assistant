@@ -83,8 +83,11 @@ public class SettingsController {
         response.put("picture", attrs.get("picture"));
         response.put("jobKeywords", settings.getJobKeywords());
         response.put("location", settings.getLocation());
+        response.put("jobType", settings.getJobType() != null ? settings.getJobType() : "ANY");
+        response.put("experienceLevel", settings.getExperienceLevel() != null ? settings.getExperienceLevel() : "ANY");
         response.put("enabledSources", settings.getEnabledSources());
         response.put("scanTimeHour", settings.getScanTimeHour());
+        response.put("availableSources", com.jarus.ai.service.JobAggregatorService.ALL_SOURCES);
         response.put("defaultResumeId", settings.getDefaultResumeId());
         response.put("geminiKeyConfigured", settings.getEncryptedGeminiKey() != null);
         response.put("isAdmin", isAdmin);
@@ -98,6 +101,8 @@ public class SettingsController {
         UserSettings settings = userRepository.getSettings(userId);
         if (req.get("jobKeywords") != null) settings.setJobKeywords(req.get("jobKeywords").toString());
         if (req.get("location") != null) settings.setLocation(req.get("location").toString());
+        if (req.get("jobType") != null) settings.setJobType(req.get("jobType").toString());
+        if (req.get("experienceLevel") != null) settings.setExperienceLevel(req.get("experienceLevel").toString());
         if (req.get("scanTimeHour") != null) settings.setScanTimeHour(Integer.parseInt(req.get("scanTimeHour").toString()));
         if (req.get("defaultResumeId") != null) settings.setDefaultResumeId(req.get("defaultResumeId").toString());
         if (req.get("enabledSources") instanceof List) {

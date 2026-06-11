@@ -111,7 +111,7 @@ public class JobController {
         if (keywords == null || keywords.isEmpty()) {
             return ResponseEntity.ok(Map.of("message", "No job keywords configured", "count", 0));
         }
-        List<JobPost> jobs = aggregatorService.fetchJobs(keywords, location, userId);
+        List<JobPost> jobs = aggregatorService.fetchJobsWithPrefs(keywords, location, userId, settings);
         int saved = 0;
         for (JobPost job : jobs) {
             try {

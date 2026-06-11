@@ -165,6 +165,17 @@ label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bott
 .badge-skill      { background: rgba(0,230,118,0.12); color: var(--success); margin: 2px; }
 .badge-skill-miss { background: rgba(255,171,0,0.12); color: var(--warning); margin: 2px; }
 
+/* Settings prefs row — two columns side by side */
+.prefs-row { display: flex; gap: 1rem; margin-top: .75rem; flex-wrap: wrap; }
+.prefs-col { flex: 1; min-width: 140px; }
+.prefs-col label { display: block; margin-bottom: .3rem; }
+
+/* Job sources checklist */
+.sources-list { display: flex; flex-direction: column; gap: .4rem; margin-top: .25rem; }
+.source-item { display: flex; align-items: center; gap: .5rem; font-size: .88rem; cursor: pointer; }
+.source-item input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
+.source-hint { font-size: .75rem; color: var(--text-muted); margin-left: .25rem; }
+
 /* -------- DROPZONE -------- */
 .dropzone {
   border: 2px dashed var(--accent-border); border-radius: 8px;

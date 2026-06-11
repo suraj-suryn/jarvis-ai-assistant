@@ -16,9 +16,35 @@ const Settings = (() => {
       const kw = document.getElementById('jobKeywords');
       const loc = document.getElementById('jobLocation');
       const hour = document.getElementById('scanHour');
+      const jobType = document.getElementById('jobType');
+      const expLevel = document.getElementById('experienceLevel');
       if (kw && data.jobKeywords) kw.value = data.jobKeywords;
       if (loc && data.location) loc.value = data.location;
       if (hour && data.scanTimeHour != null) hour.value = data.scanTimeHour;
+      if (jobType && data.jobType) jobType.value = data.jobType;
+      if (expLevel && data.experienceLevel) expLevel.value = data.experienceLevel;
+
+      // Render sources checklist
+      const list = document.getElementById('sourcesChecklist');
+      const note = document.getElementById('sourcesNote');
+      const available = data.availableSources || [];
+      const enabled = data.enabledSources && data.enabledSources.length > 0
+        ? data.enabledSources : available;
+
+      // Sources that need API keys
+      const keyRequired = { 'Adzuna': 'Needs ADZUNA_APP_ID + ADZUNA_APP_KEY env vars', 'Jooble': 'Needs JOOBLE_API_KEY env var' };
+
+      if (list && available.length > 0) {
+        list.innerHTML = available.map(src => {
+          const checked = enabled.includes(src);
+          const hint = keyRequired[src] ? `<span class="source-hint">(${keyRequired[src]})</span>` : '';
+          return `<label class="source-item">
+            <input type="checkbox" class="source-cb" value="${src}" ${checked ? 'checked' : ''}/>
+            <span>${src}</span>${hint}
+          </label>`;
+        }).join('');
+        if (note) note.textContent = 'RemoteOK, Remotive, TheMuse, Greenhouse, Lever, Arbeitnow — free, no key needed.';
+      }
     } catch (e) { console.error(e); }
   }
 
@@ -89,6 +115,11 @@ const Settings = (() => {
     const keywords = document.getElementById('jobKeywords').value.trim();
     const location = document.getElementById('jobLocation').value.trim();
     const scanTimeHour = parseInt(document.getElementById('scanHour').value, 10);
+    const jobType = document.getElementById('jobType')?.value || 'ANY';
+    const experienceLevel = document.getElementById('experienceLevel')?.value || 'ANY';
+
+    // Collect checked sources
+    const enabledSources = Array.from(document.querySelectorAll('.source-cb:checked')).map(cb => cb.value);
 
     if (!keywords) {
       const kwEl = document.getElementById('jobKeywords');
@@ -108,7 +139,7 @@ const Settings = (() => {
     const res = await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobKeywords: keywords, location, scanTimeHour })
+      body: JSON.stringify({ jobKeywords: keywords, location, scanTimeHour, jobType, experienceLevel, enabledSources })
     });
     if (res.ok) {
       alert('Preferences saved! You can now scan for jobs from the Dashboard.');
