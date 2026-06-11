@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -31,7 +32,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers(
                     "/api/**",             // SPA: session cookie auth, CSRF not needed for same-origin API
-                    "/actuator/**"))
+                    "/actuator/**",
+                    "/logout"))            // Allow GET logout from SPA link
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_PATHS).permitAll()
                 .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
@@ -41,10 +43,11 @@ public class SecurityConfig {
                 .successHandler(oAuth2LoginSuccessHandler)
                 .failureUrl("/login.html?error=true"))
             .logout(logout -> logout
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/login.html")
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID"));
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID", "SESSION"));
 
         return http.build();
     }
