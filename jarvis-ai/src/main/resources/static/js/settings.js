@@ -3,6 +3,23 @@
    ============================================================ */
 const Settings = (() => {
 
+  function showToast(msg, type = 'ok') {
+    let el = document.getElementById('settingsToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'settingsToast';
+      el.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;padding:.75rem 1.25rem;border-radius:.5rem;font-size:.9rem;font-weight:600;z-index:9999;transition:opacity .4s;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+      document.body.appendChild(el);
+    }
+    const colors = { ok: '#22c55e', warn: '#f97316', error: '#ef4444' };
+    el.style.background = colors[type] || colors.ok;
+    el.style.color = '#fff';
+    el.style.opacity = '1';
+    el.textContent = msg;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.opacity = '0'; }, 4000);
+  }
+
   async function init() {
     await loadSettings();
     await checkKeyStatus();
@@ -126,7 +143,7 @@ const Settings = (() => {
       const req = document.getElementById('kwRequired');
       if (kwEl) { kwEl.focus(); kwEl.style.borderColor = 'var(--warning)'; }
       if (req) req.classList.remove('hidden');
-      alert('Please enter at least one job keyword (e.g. "Software Engineer, React")');
+      showToast('Please enter at least one job keyword (e.g. "Software Engineer, React")', 'warn');
       return;
     }
 
@@ -142,9 +159,9 @@ const Settings = (() => {
       body: JSON.stringify({ jobKeywords: keywords, location, scanTimeHour, jobType, experienceLevel, enabledSources })
     });
     if (res.ok) {
-      alert('Preferences saved! You can now scan for jobs from the Dashboard.');
+      showToast('✓ Preferences saved! Scan from the Dashboard to apply.', 'ok');
     } else {
-      alert('Failed to save preferences');
+      showToast('Failed to save preferences — please try again.', 'error');
     }
   }
 

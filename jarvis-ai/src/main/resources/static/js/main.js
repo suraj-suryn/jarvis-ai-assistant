@@ -168,7 +168,12 @@ const App = (() => {
         job.missingSkills.map(s => `<span class="badge badge-skill-miss">${esc(s)}</span>`).join(' ') + '</div>';
     }
     skillsEl.innerHTML = skillsHtml;
-    const raw = (job.description || '').replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, '\n').trim();
+    // Decode HTML entities first (handles &lt;div&gt; etc), then strip tags
+    const tmp = document.createElement('div');
+    tmp.innerHTML = job.description || '';
+    const decoded = tmp.innerHTML.replace(/<[^>]+>/g, ' ');
+    tmp.innerHTML = decoded;
+    const raw = (tmp.textContent || tmp.innerText || '').replace(/\s{2,}/g, ' ').trim();
     document.getElementById('jdDesc').textContent = raw.substring(0, 3000);
     const link = document.getElementById('jdLink');
     if (job.url) { link.href = job.url; link.style.display = 'inline-block'; }
