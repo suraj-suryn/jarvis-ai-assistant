@@ -151,39 +151,60 @@ const App = (() => {
   function openJobDetail(jobId) {
     const job = (App._allJobs || []).find(j => j.id === jobId);
     if (!job) return;
-    const panel = document.getElementById('jobDetailPanel');
-    if (!panel) return;
+    const modal = document.getElementById('jobModal');
+    if (!modal) return;
+
     document.getElementById('jdTitle').textContent = job.title || '';
     document.getElementById('jdMeta').innerHTML =
-      `<strong>${esc(job.company || '')}</strong> &nbsp;·&nbsp; ${esc(job.location || 'Remote')} &nbsp;·&nbsp; <span class="badge badge-status">${job.status}</span>` +
-      (job.matchScore ? ` &nbsp;·&nbsp; ${scoreBadge(job.matchScore)}` : '');
+      `<strong>${esc(job.company || '')}</strong> &nbsp;·&nbsp; ${esc(job.location || 'Remote')} &nbsp;·&nbsp;
+       <span class="badge badge-status">${job.status || 'NEW'}</span>` +
+      (job.matchScore ? ` &nbsp;·&nbsp; ${scoreBadge(job.matchScore)}` : '') +
+      ` &nbsp;·&nbsp; <span style="color:var(--text-muted)">${job.source || ''}</span>`;
+
     const skillsEl = document.getElementById('jdSkills');
     let skillsHtml = '';
     if (job.matchedSkills && job.matchedSkills.length) {
-      skillsHtml += '<div style="margin-bottom:.4rem"><span style="color:var(--success)">✔ Matched:</span> ' +
-        job.matchedSkills.map(s => `<span class="badge badge-skill">${esc(s)}</span>`).join(' ') + '</div>';
+      skillsHtml += '<span style="color:var(--success)">✔ Matched:</span> ' +
+        job.matchedSkills.map(s => `<span class="badge badge-skill">${esc(s)}</span>`).join(' ') + '  ';
     }
     if (job.missingSkills && job.missingSkills.length) {
-      skillsHtml += '<div><span style="color:var(--warning)">⚠ Missing:</span> ' +
-        job.missingSkills.map(s => `<span class="badge badge-skill-miss">${esc(s)}</span>`).join(' ') + '</div>';
+      skillsHtml += '<span style="color:var(--warning)">⚠ Missing:</span> ' +
+        job.missingSkills.map(s => `<span class="badge badge-skill-miss">${esc(s)}</span>`).join(' ');
     }
     skillsEl.innerHTML = skillsHtml;
-    // Step 1: use browser to decode HTML entities (&lt; → <, &quot; → ")
-    const tmp = document.createElement('div');
-    tmp.innerHTML = job.description || '';
-    const withTags = tmp.textContent || tmp.innerText || '';
-    // Step 2: strip any remaining literal HTML tags (<div>, <p>, etc.)
-    const raw = withTags.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
-    document.getElementById('jdDesc').textContent = raw.substring(0, 3000);
+    skillsEl.style.display = skillsHtml ? 'block' : 'none';
+
+    // Render description: decode HTML entities, strip unsafe tags, keep structure
+    const descEl = document.getElementById('jdDesc');
+    const raw = job.description || '';
+    if (raw.includes('&lt;') || raw.includes('<')) {
+      // Decode entities into real HTML, then sanitize (remove scripts/iframes only)
+      const tmp = document.createElement('div');
+      tmp.innerHTML = raw;
+      // Remove only dangerous tags
+      tmp.querySelectorAll('script,iframe,object,embed,form,input,button').forEach(el => el.remove());
+      // Remove all style/class/id/on* attrs
+      tmp.querySelectorAll('*').forEach(el => {
+        ['style','class','id','onclick','onload','onerror'].forEach(a => el.removeAttribute(a));
+        if (el.tagName === 'A') { el.setAttribute('target','_blank'); el.setAttribute('rel','noopener noreferrer'); }
+      });
+      descEl.innerHTML = tmp.innerHTML;
+    } else {
+      descEl.textContent = raw;
+    }
+
     const link = document.getElementById('jdLink');
     if (job.url) { link.href = job.url; link.style.display = 'inline-block'; }
     else { link.style.display = 'none'; }
-    panel.classList.remove('hidden');
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
 
   function closeJobDetail() {
-    const panel = document.getElementById('jobDetailPanel');
-    if (panel) panel.classList.add('hidden');
+    const modal = document.getElementById('jobModal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
   }
 
   function greet() {

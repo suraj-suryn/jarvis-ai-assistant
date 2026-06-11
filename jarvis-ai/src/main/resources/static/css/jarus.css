@@ -294,14 +294,60 @@ label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bott
 .tag-APPLIED { color: var(--warning); }
 
 /* -------- SIDE PANEL -------- */
-.side-panel {
-  position: fixed; right: 0; top: 0; height: 100vh; width: 360px;
-  background: var(--bg-card); border-left: 1px solid var(--accent-border);
-  padding: 1.5rem; z-index: 200; overflow-y: auto;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.4);
+/* -------- JOB DETAIL MODAL -------- */
+.job-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 1rem; animation: fadeIn .18s ease;
 }
-.close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; float: right; }
-.close-btn:hover { color: var(--danger); }
+.job-modal-overlay.hidden { display: none; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.job-modal-box {
+  background: var(--bg-card); border: 1px solid var(--accent-border);
+  border-radius: 12px; width: 100%; max-width: 860px; max-height: 90vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+.job-modal-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 1.5rem 1.75rem 1rem; border-bottom: 1px solid var(--accent-border);
+  gap: 1rem;
+}
+.job-modal-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 .35rem; color: var(--text); }
+.job-modal-meta { font-size: .85rem; color: var(--text-muted); }
+.job-modal-close {
+  background: none; border: none; color: var(--text-muted); font-size: 1.4rem;
+  cursor: pointer; line-height: 1; padding: 0 .25rem; flex-shrink: 0;
+}
+.job-modal-close:hover { color: var(--danger); }
+.job-modal-skills { padding: .75rem 1.75rem; border-bottom: 1px solid var(--accent-border); font-size:.84rem; }
+.job-modal-body { flex: 1; overflow-y: auto; padding: 1.25rem 1.75rem; }
+.job-modal-desc { font-size: .9rem; line-height: 1.75; color: var(--text); }
+/* Format rendered job description HTML */
+.job-modal-desc h1, .job-modal-desc h2 {
+  font-size: 1rem; font-weight: 700; color: var(--accent);
+  margin: 1.25rem 0 .4rem; padding-bottom: .25rem;
+  border-bottom: 1px solid var(--accent-border);
+}
+.job-modal-desc h3 { font-size: .95rem; font-weight: 600; margin: 1rem 0 .3rem; }
+.job-modal-desc p { margin: 0 0 .75rem; }
+.job-modal-desc ul, .job-modal-desc ol { padding-left: 1.4rem; margin: 0 0 .75rem; }
+.job-modal-desc li { margin-bottom: .3rem; }
+.job-modal-desc strong { color: var(--text); }
+.job-modal-desc a { color: var(--accent); }
+.job-modal-footer {
+  display: flex; gap: .75rem; padding: 1rem 1.75rem;
+  border-top: 1px solid var(--accent-border); align-items: center;
+}
+.btn-secondary {
+  padding: .5rem 1.25rem; border: 1px solid var(--accent-border);
+  border-radius: 6px; background: transparent; color: var(--text-muted);
+  cursor: pointer; font-size: .88rem;
+}
+.btn-secondary:hover { background: var(--accent-glow); color: var(--text); }
+body.light-mode .job-modal-box { background: #fff; }
 
 /* -------- COMPANY -------- */
 .input-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
