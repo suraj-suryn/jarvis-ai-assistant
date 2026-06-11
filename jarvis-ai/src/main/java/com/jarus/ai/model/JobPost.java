@@ -48,6 +48,9 @@ public class JobPost {
     @Column(length = 20)
     private String workType;
 
+    @Column(length = 200)
+    private String salary;
+
     public JobPost() {
         this.status = "NEW";
         this.capturedAt = System.currentTimeMillis();
@@ -87,4 +90,6 @@ public class JobPost {
     public void setInterviewDate(long interviewDate) { this.interviewDate = interviewDate; }
     public String getWorkType() { return workType; }
     public void setWorkType(String workType) { this.workType = workType; }
+    public String getSalary() { return salary; }
+    public void setSalary(String salary) { this.salary = salary; }
 }

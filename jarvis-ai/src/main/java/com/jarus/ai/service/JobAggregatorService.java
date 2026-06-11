@@ -124,8 +124,19 @@ public class JobAggregatorService {
             if (!matchesKeywords(title + " " + node.path("tags").toString(), kw)) continue;
             String url = node.path("url").asText();
             if (!seenUrls.add(url)) continue;
-            jobs.add(build(userId, title, node.path("company").asText(),
-                    node.path("description").asText(), url, "RemoteOK", "REMOTE"));
+            String desc = node.path("description").asText();
+            // RemoteOK provides salary_min / salary_max in USD
+            String salary = null;
+            if (node.has("salary_min") && !node.path("salary_min").asText().isBlank() && !node.path("salary_min").asText().equals("0")) {
+                String min = node.path("salary_min").asText();
+                String max = node.path("salary_max").asText();
+                salary = "$" + min + (max != null && !max.isBlank() && !max.equals("0") ? " – $" + max : "+") + " /yr";
+            } else {
+                salary = extractSalaryFromDesc(desc);
+            }
+            JobPost job = build(userId, title, node.path("company").asText(), desc, url, "RemoteOK", "REMOTE");
+            if (salary != null) job.setSalary(salary);
+            jobs.add(job);
         }
         return jobs;
     }
@@ -141,8 +152,19 @@ public class JobAggregatorService {
         for (JsonNode node : root.path("jobs")) {
             String url = node.path("url").asText();
             if (!seenUrls.add(url)) continue;
-            jobs.add(build(userId, node.path("title").asText(), node.path("company_name").asText(),
-                    node.path("description").asText(), url, "Remotive", "REMOTE"));
+            String desc = node.path("description").asText();
+            // Remotive provides salary field directly
+            String salary = null;
+            String remotiveSalary = node.path("salary").asText("");
+            if (!remotiveSalary.isBlank()) {
+                salary = remotiveSalary;
+            } else {
+                salary = extractSalaryFromDesc(desc);
+            }
+            JobPost job = build(userId, node.path("title").asText(), node.path("company_name").asText(),
+                    desc, url, "Remotive", "REMOTE");
+            if (salary != null) job.setSalary(salary);
+            jobs.add(job);
         }
         return jobs;
     }
@@ -240,8 +262,19 @@ public class JobAggregatorService {
             String url = node.path("url").asText();
             if (!seenUrls.add(url)) continue;
             String wtype = node.path("remote").asBoolean() ? "REMOTE" : "ONSITE";
-            jobs.add(build(userId, title, node.path("company_name").asText(),
-                    node.path("description").asText(), url, "Arbeitnow", wtype));
+            String desc = node.path("description").asText();
+            // Arbeitnow provides salary_range
+            String salary = null;
+            String arbSalary = node.path("salary_range").asText("");
+            if (!arbSalary.isBlank()) {
+                salary = arbSalary;
+            } else {
+                salary = extractSalaryFromDesc(desc);
+            }
+            JobPost job = build(userId, title, node.path("company_name").asText(),
+                    desc, url, "Arbeitnow", wtype);
+            if (salary != null) job.setSalary(salary);
+            jobs.add(job);
         }
         return jobs;
     }
@@ -327,6 +360,26 @@ public class JobAggregatorService {
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    // Extract salary range from free-text description using common patterns
+    private String extractSalaryFromDesc(String desc) {
+        if (desc == null || desc.isBlank()) return null;
+        // Patterns: $120,000 – $180,000 | ₹15L – ₹25L | $120k-$180k | USD 120,000 | £60,000
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(
+            "(?i)(?:salary|compensation|pay|package|ctc|lpa|range)[^\\n]{0,30}?" +
+            "([\\$\\£\\€\\u20b9][\\d,\\.]+[kKlLmM]?\\s*(?:[-–]\\s*[\\$\\£\\€\\u20b9][\\d,\\.]+[kKlLmM]?)?" +
+            "(?:\\s*(?:per year|per annum|/yr|/year|pa|annually|lpa|ctc))?)"
+        );
+        java.util.regex.Matcher m = p.matcher(desc);
+        if (m.find()) return m.group(1).trim();
+        // Fallback: plain currency range like $120,000 – $180,000
+        java.util.regex.Pattern p2 = java.util.regex.Pattern.compile(
+            "([\\$\\£\\€\\u20b9][\\d,\\.]+[kKlLmM]?\\s*(?:[-–—]\\s*[\\$\\£\\€\\u20b9][\\d,\\.]+[kKlLmM]?))"
+        );
+        java.util.regex.Matcher m2 = p2.matcher(desc);
+        if (m2.find()) return m2.group(1).trim();
+        return null;
+    }
 
     private JobPost build(String userId, String title, String company, String desc,
                            String url, String source, String workType) {

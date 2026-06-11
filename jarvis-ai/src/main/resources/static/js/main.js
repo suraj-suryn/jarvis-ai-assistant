@@ -159,7 +159,8 @@ const App = (() => {
       `<strong>${esc(job.company || '')}</strong> &nbsp;·&nbsp; ${esc(job.location || 'Remote')} &nbsp;·&nbsp;
        <span class="badge badge-status">${job.status || 'NEW'}</span>` +
       (job.matchScore ? ` &nbsp;·&nbsp; ${scoreBadge(job.matchScore)}` : '') +
-      ` &nbsp;·&nbsp; <span style="color:var(--text-muted)">${job.source || ''}</span>`;
+      ` &nbsp;·&nbsp; <span style="color:var(--text-muted)">${job.source || ''}</span>` +
+      (job.salary ? ` &nbsp;·&nbsp; <span class="salary-badge">💰 ${esc(job.salary)}</span>` : '');
 
     const skillsEl = document.getElementById('jdSkills');
     let skillsHtml = '';
