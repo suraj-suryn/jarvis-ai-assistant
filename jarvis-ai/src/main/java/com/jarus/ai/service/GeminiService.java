@@ -36,6 +36,11 @@ public class GeminiService {
     @Value("${gemini.model:gemini-2.0-flash}")
     private String geminiModel;
 
+    // Fallback models tried in order when primary is rate-limited
+    private static final List<String> FALLBACK_MODELS = List.of(
+        "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"
+    );
+
     public String chat(String message, String apiKey) {
         return callGemini(message, apiKey);
     }
@@ -112,6 +117,33 @@ public class GeminiService {
         CachedResponse cached = responseCache.get(cacheKey);
         if (cached != null && cached.isValid()) return cached.response();
 
+        // Try primary model first, then fallbacks on 429
+        List<String> modelsToTry = new ArrayList<>();
+        modelsToTry.add(geminiModel);
+        modelsToTry.addAll(FALLBACK_MODELS.stream()
+            .filter(m -> !m.equals(geminiModel)).toList());
+
+        WebClientResponseException lastEx = null;
+        for (String model : modelsToTry) {
+            try {
+                String result = callGeminiModel(prompt, apiKey, model);
+                responseCache.put(cacheKey, new CachedResponse(result, System.currentTimeMillis()));
+                return result;
+            } catch (WebClientResponseException e) {
+                if (e.getStatusCode().value() == 429) {
+                    lastEx = e;
+                    // try next model
+                } else {
+                    throw new RuntimeException("Gemini API error " + e.getStatusCode() + ": " + e.getResponseBodyAsString(), e);
+                }
+            }
+        }
+        // All models rate-limited
+        throw new com.jarus.ai.exception.GeminiRateLimitException(
+            "Gemini rate limit exceeded on all models — please wait a minute and retry");
+    }
+
+    private String callGeminiModel(String prompt, String apiKey, String model) {
         ObjectNode requestBody = objectMapper.createObjectNode();
         ArrayNode contents = requestBody.putArray("contents");
         ObjectNode content = contents.addObject();
@@ -123,28 +155,19 @@ public class GeminiService {
         genConfig.put("maxOutputTokens", 4096);
 
         String responseBody;
-        try {
-            responseBody = geminiWebClient.post()
-                    .uri("/v1beta/models/{model}:generateContent?key={key}", geminiModel, apiKey)
-                    .header("Content-Type", "application/json")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
-            if (e.getStatusCode().value() == 429) {
-                throw new com.jarus.ai.exception.GeminiRateLimitException("Gemini rate limit exceeded — wait a minute and retry");
-            }
-            throw new RuntimeException("Gemini API error " + e.getStatusCode() + ": " + e.getResponseBodyAsString(), e);
-        }
+        responseBody = geminiWebClient.post()
+                .uri("/v1beta/models/{model}:generateContent?key={key}", model, apiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
 
         try {
             JsonNode root = objectMapper.readTree(responseBody);
             String result = root.path("candidates").get(0)
                     .path("content").path("parts").get(0)
                     .path("text").asText();
-            // Store in cache for 30 mins
-            responseCache.put(cacheKey, new CachedResponse(result, System.currentTimeMillis()));
             return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse Gemini response: " + responseBody, e);

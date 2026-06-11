@@ -81,23 +81,74 @@ const Resume = (() => {
       + resumes.map(r => `<option value="${r.id}">${App.esc(r.fileName)}</option>`).join('');
   }
 
+  let _allSelectJobs = [];
+
   async function loadJobsForSelect() {
     try {
       const res = await fetch('/api/jobs');
       if (!res.ok) return;
-      const jobs = await res.json();
-      const sel = document.getElementById('tailorJobSelect');
-      if (!sel) return;
-      sel.innerHTML = '<option value="">Select job…</option>'
-        + jobs.map(j => `<option value="${j.id}">${App.esc(j.title)} — ${App.esc(j.company)}</option>`).join('');
-      if (pendingJobId) { sel.value = pendingJobId; pendingJobId = null; }
+      _allSelectJobs = await res.json();
+      renderJobDropdown(_allSelectJobs);
+      if (pendingJobId) {
+        const job = _allSelectJobs.find(j => j.id === pendingJobId);
+        if (job) selectJob(job.id, job.title + ' — ' + job.company);
+        pendingJobId = null;
+      }
     } catch (e) { console.error(e); }
   }
+
+  function renderJobDropdown(jobs) {
+    const dd = document.getElementById('tailorJobDropdown');
+    if (!dd) return;
+    if (jobs.length === 0) {
+      dd.innerHTML = '<div class="job-dd-empty">No matching jobs</div>';
+    } else {
+      dd.innerHTML = jobs.map(j =>
+        `<div class="job-dd-item" onclick="Resume.selectJob('${j.id}', ${JSON.stringify(App.esc(j.title) + ' — ' + App.esc(j.company))})"
+          ><strong>${App.esc(j.title)}</strong><span>${App.esc(j.company)}</span></div>`
+      ).join('');
+    }
+  }
+
+  function filterJobDropdown(query) {
+    const dd = document.getElementById('tailorJobDropdown');
+    if (!dd) return;
+    // Clear selection when typing
+    document.getElementById('tailorJobSelect').value = '';
+    dd.classList.remove('hidden');
+    const q = query.toLowerCase();
+    const filtered = q ? _allSelectJobs.filter(j =>
+      (j.title || '').toLowerCase().includes(q) ||
+      (j.company || '').toLowerCase().includes(q)
+    ) : _allSelectJobs;
+    renderJobDropdown(filtered);
+  }
+
+  function showJobDropdown() {
+    const dd = document.getElementById('tailorJobDropdown');
+    if (dd) dd.classList.remove('hidden');
+  }
+
+  function selectJob(id, label) {
+    document.getElementById('tailorJobSelect').value = id;
+    document.getElementById('tailorJobSearch').value = label;
+    const dd = document.getElementById('tailorJobDropdown');
+    if (dd) dd.classList.add('hidden');
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#tailorJobWrap')) {
+      const dd = document.getElementById('tailorJobDropdown');
+      if (dd) dd.classList.add('hidden');
+    }
+  });
 
   async function tailor() {
     const resumeId = document.getElementById('tailorResumeSelect').value;
     const jobId    = document.getElementById('tailorJobSelect').value;
-    if (!resumeId || !jobId) { alert('Please select a resume and a job'); return; }
+    if (!resumeId) { alert('Please select a resume'); return; }
+    if (!jobId) { alert('Please search and select a job from the list'); return; }
 
     const progress = document.getElementById('tailorProgress');
     const msgEl    = document.getElementById('tailorProgressMsg');
@@ -400,5 +451,5 @@ const Resume = (() => {
     }
   }
 
-  return { init, tailor, download, loadCoverLetters, viewCoverLetter, deleteCoverLetter, writeCoverLetter, genCoverFromTailor, prefillJob, delete: deleteResume };
+  return { init, tailor, download, loadCoverLetters, viewCoverLetter, deleteCoverLetter, writeCoverLetter, genCoverFromTailor, prefillJob, delete: deleteResume, filterJobDropdown, showJobDropdown, selectJob };
 })();

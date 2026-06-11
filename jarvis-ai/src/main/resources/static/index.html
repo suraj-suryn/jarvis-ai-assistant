@@ -101,7 +101,11 @@
           <div class="card" id="tailorCard">
             <h3>AI Tailor Resume</h3>
             <select id="tailorResumeSelect" class="select-input"><option value="">Select resume…</option></select>
-            <select id="tailorJobSelect" class="select-input"><option value="">Select job…</option></select>
+            <div class="job-search-wrap" id="tailorJobWrap">
+              <input type="text" id="tailorJobSearch" class="select-input" placeholder="🔍 Search job by title or company…" autocomplete="off" oninput="Resume.filterJobDropdown(this.value)" onfocus="Resume.showJobDropdown()" />
+              <input type="hidden" id="tailorJobSelect" />
+              <div id="tailorJobDropdown" class="job-search-dropdown hidden"></div>
+            </div>
             <button class="btn-primary" onclick="Resume.tailor()">✨ Tailor with AI</button>
             <div id="tailorProgress" class="tailor-progress hidden">
               <span class="tailor-spinner"></span>

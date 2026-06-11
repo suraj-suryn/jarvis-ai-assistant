@@ -121,6 +121,24 @@ a:hover { text-decoration: underline; }
 .notes-input { height: 200px; resize: vertical; font-family: var(--font); }
 label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem; }
 
+/* -------- JOB SEARCH DROPDOWN -------- */
+.job-search-wrap { position: relative; margin-bottom: 0.75rem; }
+.job-search-wrap .select-input { margin-bottom: 0; }
+.job-search-dropdown {
+  position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 200;
+  background: var(--bg-card); border: 1px solid var(--accent-border); border-radius: 6px;
+  max-height: 260px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.job-dd-item {
+  padding: .55rem .85rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.05);
+  display: flex; flex-direction: column; gap: .15rem;
+}
+.job-dd-item:last-child { border-bottom: none; }
+.job-dd-item:hover { background: var(--accent-glow); }
+.job-dd-item strong { font-size: .88rem; color: var(--text); }
+.job-dd-item span { font-size: .78rem; color: var(--text-muted); }
+.job-dd-empty { padding: .75rem; color: var(--text-muted); font-size: .85rem; text-align: center; }
+
 /* -------- STATS -------- */
 .stats-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .stat-card {
