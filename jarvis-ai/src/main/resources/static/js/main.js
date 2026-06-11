@@ -168,12 +168,12 @@ const App = (() => {
         job.missingSkills.map(s => `<span class="badge badge-skill-miss">${esc(s)}</span>`).join(' ') + '</div>';
     }
     skillsEl.innerHTML = skillsHtml;
-    // Decode HTML entities first (handles &lt;div&gt; etc), then strip tags
+    // Step 1: use browser to decode HTML entities (&lt; → <, &quot; → ")
     const tmp = document.createElement('div');
     tmp.innerHTML = job.description || '';
-    const decoded = tmp.innerHTML.replace(/<[^>]+>/g, ' ');
-    tmp.innerHTML = decoded;
-    const raw = (tmp.textContent || tmp.innerText || '').replace(/\s{2,}/g, ' ').trim();
+    const withTags = tmp.textContent || tmp.innerText || '';
+    // Step 2: strip any remaining literal HTML tags (<div>, <p>, etc.)
+    const raw = withTags.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').trim();
     document.getElementById('jdDesc').textContent = raw.substring(0, 3000);
     const link = document.getElementById('jdLink');
     if (job.url) { link.href = job.url; link.style.display = 'inline-block'; }
