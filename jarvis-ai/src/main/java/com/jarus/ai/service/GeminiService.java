@@ -123,7 +123,6 @@ public class GeminiService {
         modelsToTry.addAll(FALLBACK_MODELS.stream()
             .filter(m -> !m.equals(geminiModel)).toList());
 
-        WebClientResponseException lastEx = null;
         for (String model : modelsToTry) {
             try {
                 String result = callGeminiModel(prompt, apiKey, model);
@@ -131,10 +130,9 @@ public class GeminiService {
                 return result;
             } catch (WebClientResponseException e) {
                 if (e.getStatusCode().value() == 429) {
-                    lastEx = e;
-                    // try next model
+                    // rate-limited on this model — try next fallback
                 } else {
-                    throw new RuntimeException("Gemini API error " + e.getStatusCode() + ": " + e.getResponseBodyAsString(), e);
+                    throw e; // propagate 401/403/400 directly — caller handles it
                 }
             }
         }
