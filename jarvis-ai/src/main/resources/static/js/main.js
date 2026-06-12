@@ -178,12 +178,17 @@ const App = (() => {
     // Render description: decode HTML entities, strip unsafe tags, keep structure
     const descEl = document.getElementById('jdDesc');
     const raw = job.description || '';
-    if (raw.includes('&lt;') || raw.includes('<')) {
-      // Decode entities into real HTML, then sanitize (remove scripts/iframes only)
+    if (raw.includes('&lt;') || raw.includes('&#') || raw.includes('<')) {
+      // Two-pass decode: if raw has HTML entities, first decode to real HTML text, then parse
       const tmp = document.createElement('div');
-      tmp.innerHTML = raw;
+      if (raw.includes('&lt;') || raw.includes('&#')) {
+        tmp.innerHTML = raw;                // pass 1: decode entities → text node with <div>...
+        tmp.innerHTML = tmp.textContent;    // pass 2: parse decoded text as actual HTML
+      } else {
+        tmp.innerHTML = raw;
+      }
       // Remove only dangerous tags
-      tmp.querySelectorAll('script,iframe,object,embed,form,input,button').forEach(el => el.remove());
+      tmp.querySelectorAll('script,iframe,object,embed,form,input,button,style').forEach(el => el.remove());
       // Remove all style/class/id/on* attrs
       tmp.querySelectorAll('*').forEach(el => {
         ['style','class','id','onclick','onload','onerror'].forEach(a => el.removeAttribute(a));
